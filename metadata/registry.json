@@ -1,0 +1,61 @@
+{
+  "enosa_energy_consumption": {
+    "name": "Consumo Energético Clientes ENOSA",
+    "provider": "ENOSA",
+    "domain": "energy_consumption",
+    "schema": "energy_consumption",
+    "columns_schema": "legacy",
+    "frequency": "monthly",
+    "package_id": "4286d17a-5274-4ad2-a6de-fbc497a72fe0",
+    "storage": {
+      "raw": "data/raw/enosa",
+      "extracted": "data/extracted/enosa",
+      "interim": "data/interim/enosa"
+    },
+    "overrides": {
+      "202401": {
+        "reader": "corrupted_csv"
+      },
+      "202403": {
+        "reader": "corrupted_xlsx"
+      },
+      "202404": {
+        "reader": "corrupted_xlsx"
+      },
+      "202405": {
+        "reader": "corrupted_xlsx"
+      },
+      "202412": {
+        "reader": "extra_line",
+        "parameters": {
+          "marker": "S012-08043illa"
+        }
+      }
+    }
+  },
+  "hidrandina_energy_consumption": {
+    "name": "Consumo Energético Clientes Hidrandina",
+    "provider": "Hidrandina",
+    "domain": "energy_consumption",
+    "schema": "energy_consumption",
+    "columns_schema": "standard",
+    "frequency": "monthly",
+    "package_id": "231d2c66-e540-4b95-9b44-9c8c8a2c2b68",
+    "storage": {
+      "raw": "data/raw/hidrandina",
+      "extracted": "data/extracted/hidrandina",
+      "interim": "data/interim/hidrandina"
+    },
+    "overrides": {
+      "202305": {
+        "reader": "corrupted_csv"
+      },
+      "202406": {
+        "reader": "csv",
+        "parameters": {
+          "separator": ","
+        }
+      }
+    }
+  }
+}

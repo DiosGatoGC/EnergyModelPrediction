@@ -1,0 +1,693 @@
+{
+  "_comment": "AUTO-GENERATED FILE. Actualizado desde 00_descarga.ipynb",
+  "generated_at": "2026-10-05 20:17:25",
+  "version": "1.0",
+  "datasets": {
+    "enosa_energy_consumption": {
+      "name": "Consumo Energético Clientes ENOSA",
+      "provider": "ENOSA",
+      "domain": "energy_consumption",
+      "schema": "energy_consumption",
+      "columns_schema": "legacy",
+      "frequency": "monthly",
+      "storage": {
+        "raw": "data/raw/enosa",
+        "extracted": "data/extracted/enosa",
+        "interim": "data/interim/enosa"
+      },
+      "sources": {
+        "202401": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosCompartidos202401.zip",
+            "filename": "DatosCompartidos202401.zip"
+          },
+          "ingestion": {
+            "reader": "corrupted_csv",
+            "columns_schema": "legacy"
+          }
+        },
+        "202402": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosCompartido202402.xlsx",
+            "filename": "DatosCompartido202402.xlsx"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202403": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosCompartidos202403.zip",
+            "filename": "DatosCompartidos202403.zip"
+          },
+          "ingestion": {
+            "reader": "corrupted_xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202404": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosCompartido202404.zip",
+            "filename": "DatosCompartido202404.zip"
+          },
+          "ingestion": {
+            "reader": "corrupted_xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202405": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosCompartido202405.zip",
+            "filename": "DatosCompartido202405.zip"
+          },
+          "ingestion": {
+            "reader": "corrupted_xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202406": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosCompartido202406.xlsx",
+            "filename": "DatosCompartido202406.xlsx"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202407": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosCompartido202407.csv",
+            "filename": "DatosCompartido202407.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202408": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo%20Energ%C3%A9tico%20clientes%20enosa%20Agosto%202024.csv",
+            "filename": "Consumo Energético clientes enosa Agosto 2024.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202409": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_enosa_Setiembre_2024.csv",
+            "filename": "Consumo_Energetico_clientes_enosa_Setiembre_2024.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202410": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_enosa_Octubre_2024.csv",
+            "filename": "Consumo_Energetico_clientes_enosa_Octubre_2024.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202411": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_enosa_Noviembre_2024.csv",
+            "filename": "Consumo_Energetico_clientes_enosa_Noviembre_2024.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202412": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_enosa_Diciembre_2024.csv",
+            "filename": "Consumo_Energetico_clientes_enosa_Diciembre_2024.csv"
+          },
+          "ingestion": {
+            "reader": "extra_line",
+            "parameters": {
+              "marker": "S012-08043illa"
+            },
+            "columns_schema": "legacy"
+          }
+        },
+        "202501": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Enero_2025.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Enero_2025.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202502": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Febrero_2025.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Febrero_2025.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202503": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Marzo_2025.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Marzo_2025.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202504": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Abril_2025.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Abril_2025.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202505": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Mayo_2025.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Mayo_2025.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202506": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Junio_2025.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Junio_2025.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202507": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Julio_2025.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Julio_2025.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202508": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Agosto_2025.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Agosto_2025.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202509": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Setiembre_2025.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Setiembre_2025.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202510": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Octubre_2025.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Octubre_2025.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202511": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Noviembre_2025.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Noviembre_2025.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202512": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Diciembre_2025.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Diciembre_2025.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202601": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Enero_2026.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Enero_2026.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202602": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Febrero_2026.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Febrero_2026.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202603": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Marzo_2026.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Marzo_2026.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202604": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Abril_2026.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Abril_2026.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202605": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Mayo_2026.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Mayo_2026.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "legacy"
+          }
+        },
+        "202606": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Junio_2026.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Junio_2026.csv"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "legacy"
+          }
+        },
+        "202607": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Julio_2026.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Julio_2026.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "legacy"
+          }
+        },
+        "202608": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/Consumo_Energetico_clientes_Enosa_Agosto_2026.csv",
+            "filename": "Consumo_Energetico_clientes_Enosa_Agosto_2026.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "legacy"
+          }
+        }
+      }
+    },
+    "hidrandina_energy_consumption": {
+      "name": "Consumo Energético Clientes Hidrandina",
+      "provider": "Hidrandina",
+      "domain": "energy_consumption",
+      "schema": "energy_consumption",
+      "columns_schema": "standard",
+      "frequency": "monthly",
+      "storage": {
+        "raw": "data/raw/hidrandina",
+        "extracted": "data/extracted/hidrandina",
+        "interim": "data/interim/hidrandina"
+      },
+      "sources": {
+        "202211": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/_DatosAbiertos_consumohdna_281222.csv",
+            "filename": "_DatosAbiertos_consumohdna_281222.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202212": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202212.csv",
+            "filename": "DatosAbiertos_consumohdna_202212.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202301": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202301.csv",
+            "filename": "DatosAbiertos_consumohdna_202301.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202302": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202302.csv",
+            "filename": "DatosAbiertos_consumohdna_202302.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202303": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202303.csv",
+            "filename": "DatosAbiertos_consumohdna_202303.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202304": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202304.csv",
+            "filename": "DatosAbiertos_consumohdna_202304.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202305": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202305.csv",
+            "filename": "DatosAbiertos_consumohdna_202305.csv"
+          },
+          "ingestion": {
+            "reader": "corrupted_csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202306": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202306_0.csv",
+            "filename": "DatosAbiertos_consumohdna_202306_0.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202307": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202307_ok.csv",
+            "filename": "DatosAbiertos_consumohdna_202307_ok.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202308": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202308_0.csv",
+            "filename": "DatosAbiertos_consumohdna_202308_0.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202309": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202309_0.csv",
+            "filename": "DatosAbiertos_consumohdna_202309_0.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202310": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202310_0.csv",
+            "filename": "DatosAbiertos_consumohdna_202310_0.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202311": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202311_0.csv",
+            "filename": "DatosAbiertos_consumohdna_202311_0.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202312": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202312_0.csv",
+            "filename": "DatosAbiertos_consumohdna_202312_0.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202401": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202401_ok.csv",
+            "filename": "DatosAbiertos_consumohdna_202401_ok.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202402": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202402.csv",
+            "filename": "DatosAbiertos_consumohdna_202402.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202403": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202403.csv",
+            "filename": "DatosAbiertos_consumohdna_202403.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202404": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202404.csv",
+            "filename": "DatosAbiertos_consumohdna_202404.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202405": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202405.csv",
+            "filename": "DatosAbiertos_consumohdna_202405.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202406": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202406.csv",
+            "filename": "DatosAbiertos_consumohdna_202406.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "parameters": {
+              "separator": ","
+            },
+            "columns_schema": "standard"
+          }
+        },
+        "202407": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202407.csv",
+            "filename": "DatosAbiertos_consumohdna_202407.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202408": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202408.xlsx",
+            "filename": "DatosAbiertos_consumohdna_202408.xlsx"
+          },
+          "ingestion": {
+            "reader": "xlsx",
+            "columns_schema": "standard"
+          }
+        },
+        "202409": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202409.csv",
+            "filename": "DatosAbiertos_consumohdna_202409.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202410": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202410.csv",
+            "filename": "DatosAbiertos_consumohdna_202410.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202411": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202411.csv",
+            "filename": "DatosAbiertos_consumohdna_202411.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202412": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202412.csv",
+            "filename": "DatosAbiertos_consumohdna_202412.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202501": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202501.csv",
+            "filename": "DatosAbiertos_consumohdna_202501.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202502": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202502.csv",
+            "filename": "DatosAbiertos_consumohdna_202502.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202503": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202503.csv",
+            "filename": "DatosAbiertos_consumohdna_202503.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202504": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202504.csv",
+            "filename": "DatosAbiertos_consumohdna_202504.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202505": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202505.csv",
+            "filename": "DatosAbiertos_consumohdna_202505.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202506": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202506.csv",
+            "filename": "DatosAbiertos_consumohdna_202506.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        },
+        "202507": {
+          "source": {
+            "url": "https://www.datosabiertos.gob.pe/sites/default/files/DatosAbiertos_consumohdna_202507.csv",
+            "filename": "DatosAbiertos_consumohdna_202507.csv"
+          },
+          "ingestion": {
+            "reader": "csv",
+            "columns_schema": "standard"
+          }
+        }
+      }
+    }
+  }
+}

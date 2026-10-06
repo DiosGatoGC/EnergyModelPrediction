@@ -1,0 +1,5 @@
+GRUPO_TARIFA,total_facturas,energia_gwh,importe_millones,mediana_kwh,pct_clientes,pct_energia
+Residencial (BT5B),51061419,4625.49,4541.67,46.0,99.26,69.52
+Media Tensión (Industrial),129898,1717.89,1054.79,3585.4,0.25,25.82
+Otros / Especiales,155493,240.33,207.99,66.0,0.3,3.61
+"Comercial (BT5A/C, BT6)",94370,69.7,30.4,600.0,0.18,1.05

@@ -1,0 +1,3 @@
+relacion,correlacion_pearson,pares_validos
+Consumo actual vs mes anterior (lag_1),0.9870715141296387,40389
+Consumo actual vs mismo mes del año anterior (lag_12),0.8609117865562439,25574
