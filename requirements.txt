@@ -2,3 +2,13 @@ streamlit
 plotly
 pandas
 numpy
+polars
+pyarrow
+scikit-learn
+statsmodels
+matplotlib
+seaborn
+lightgbm
+xgboost
+joblib
+catboost
