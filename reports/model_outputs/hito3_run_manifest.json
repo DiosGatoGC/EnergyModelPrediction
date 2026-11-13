@@ -1,0 +1,168 @@
+{
+  "run_name": "hito3_oficial_validation_selection_v1",
+  "executed_at": "2026-11-12T23:31:04.933064-05:00",
+  "dataset": "data\\processed\\dataset_ml.parquet",
+  "target": "TARGET_CONSUMO_MWH",
+  "internal_training_target": "LOG_DELTA",
+  "features": [
+    "DISTRIBUIDORA",
+    "UBIGEO",
+    "TARIFA",
+    "MES",
+    "consumo_total_mwh",
+    "lag_1",
+    "lag_2",
+    "lag_3",
+    "RATIO_LAG1",
+    "RATIO_LAG2",
+    "RATIO_LAG3",
+    "ROLLING_MEAN_3"
+  ],
+  "random_state": 42,
+  "splits": {
+    "TRAIN": "TARGET_PERIODO <= 202412",
+    "VALIDATION": "202501 <= TARGET_PERIODO <= 202503",
+    "TEST": "202504 <= TARGET_PERIODO <= 202507",
+    "FUTURE_HOLDOUT": "TARGET_PERIODO > 202507"
+  },
+  "cv": {
+    "type": "expanding calendar window",
+    "folds": 3,
+    "validation_months": 3,
+    "source": "TRAIN only"
+  },
+  "tuning_metric": "negative MAE on LOG_DELTA inside TRAIN CV",
+  "selection_metric": "MAE_MWh on VALIDATION",
+  "champion": {
+    "name": "LightGBM Avanzado (Hito 3)",
+    "family": "LightGBM",
+    "hyperparameters": {
+      "modelo__subsample": 0.8,
+      "modelo__num_leaves": 31,
+      "modelo__n_estimators": 120,
+      "modelo__min_child_samples": 50,
+      "modelo__learning_rate": 0.03,
+      "modelo__colsample_bytree": 0.8
+    },
+    "model_path": "models\\modelo_campeon_hito3.joblib"
+  },
+  "validation_metrics": [
+    {
+      "MODELO": "LightGBM Avanzado (Hito 3)",
+      "MAE_MWh": 11.35529534716855,
+      "RMSE_MWh": 70.96858583739385,
+      "R2": 0.9947295574925947,
+      "WAPE_pct": 6.030123166312549,
+      "MEJORA_MAE_pct": 22.473145735554574,
+      "HIPERPARAMETROS_SELECCIONADOS": "{\"modelo__colsample_bytree\": 0.8, \"modelo__learning_rate\": 0.03, \"modelo__min_child_samples\": 50, \"modelo__n_estimators\": 120, \"modelo__num_leaves\": 31, \"modelo__subsample\": 0.8}"
+    },
+    {
+      "MODELO": "XGBoost Avanzado (Hito 3)",
+      "MAE_MWh": 12.037300126270955,
+      "RMSE_MWh": 71.35305455227744,
+      "R2": 0.9946722981016308,
+      "WAPE_pct": 6.39229541214733,
+      "MEJORA_MAE_pct": 17.81684367553713,
+      "HIPERPARAMETROS_SELECCIONADOS": "{\"modelo__colsample_bytree\": 0.8, \"modelo__learning_rate\": 0.03, \"modelo__max_depth\": 7, \"modelo__min_child_weight\": 1, \"modelo__n_estimators\": 80, \"modelo__subsample\": 0.8}"
+    },
+    {
+      "MODELO": "CatBoost Avanzado (Hito 3)",
+      "MAE_MWh": 12.813040976365107,
+      "RMSE_MWh": 81.02232882257505,
+      "R2": 0.9931305143370092,
+      "WAPE_pct": 6.804245319938514,
+      "MEJORA_MAE_pct": 12.520570351636092,
+      "HIPERPARAMETROS_SELECCIONADOS": "{\"modelo__depth\": 7, \"modelo__iterations\": 120, \"modelo__l2_leaf_reg\": 5, \"modelo__learning_rate\": 0.05}"
+    },
+    {
+      "MODELO": "Referencia Temporal (Persistencia)",
+      "MAE_MWh": 14.646918741776163,
+      "RMSE_MWh": 87.54424483733393,
+      "R2": 0.9919800810511402,
+      "WAPE_pct": 7.778108919192948,
+      "MEJORA_MAE_pct": 0.0,
+      "HIPERPARAMETROS_SELECCIONADOS": "No aplica"
+    },
+    {
+      "MODELO": "Decision Tree Baseline (Hito 2)",
+      "MAE_MWh": 17.423408156260248,
+      "RMSE_MWh": 102.2831716497095,
+      "R2": 0.9890522933841385,
+      "WAPE_pct": 9.25253760003539,
+      "MEJORA_MAE_pct": -18.956133118735334,
+      "HIPERPARAMETROS_SELECCIONADOS": "{\"max_depth\": 8, \"min_samples_leaf\": 10, \"criterion\": \"squared_error\"}"
+    }
+  ],
+  "test_metrics": [
+    {
+      "MODELO": "LightGBM Avanzado (Hito 3)",
+      "MAE_MWh": 8.670241367956885,
+      "RMSE_MWh": 48.84515657047053,
+      "R2": 0.9973272164223788,
+      "WAPE_pct": 4.7516914615038655,
+      "MEJORA_MAE_pct": 14.948672441816635,
+      "SELECCIONADO_EN_VALIDATION": true
+    },
+    {
+      "MODELO": "XGBoost Avanzado (Hito 3)",
+      "MAE_MWh": 8.690998591386654,
+      "RMSE_MWh": 48.99840276461594,
+      "R2": 0.9973104189969101,
+      "WAPE_pct": 4.763067375639345,
+      "MEJORA_MAE_pct": 14.745053034443703,
+      "SELECCIONADO_EN_VALIDATION": false
+    },
+    {
+      "MODELO": "CatBoost Avanzado (Hito 3)",
+      "MAE_MWh": 9.145190338118718,
+      "RMSE_MWh": 53.84183278054937,
+      "R2": 0.9967524155602994,
+      "WAPE_pct": 5.011985364567355,
+      "MEJORA_MAE_pct": 10.289627933096703,
+      "SELECCIONADO_EN_VALIDATION": false
+    },
+    {
+      "MODELO": "Referencia Temporal (Persistencia)",
+      "MAE_MWh": 10.194128201027313,
+      "RMSE_MWh": 58.97065524427716,
+      "R2": 0.9961042355615488,
+      "WAPE_pct": 5.586851608228274,
+      "MEJORA_MAE_pct": 0.0,
+      "SELECCIONADO_EN_VALIDATION": false
+    },
+    {
+      "MODELO": "Decision Tree Baseline (Hito 2)",
+      "MAE_MWh": 12.715929929120904,
+      "RMSE_MWh": 66.12886108343803,
+      "R2": 0.9951010515650659,
+      "WAPE_pct": 6.9689150630328465,
+      "MEJORA_MAE_pct": -24.73778707079097,
+      "SELECCIONADO_EN_VALIDATION": false
+    }
+  ],
+  "future_holdout": "No participó en entrenamiento, tuning, selección ni análisis de errores de esta corrida. Fue evaluado previamente como evaluación temporal extendida y sus artefactos históricos no son outputs oficiales de esta corrida.",
+  "obsolete_or_nonofficial_artifacts": [
+    "predicciones_evaluacion_completa_2026.csv",
+    "matriz_completa_estrategias_algoritmos.csv",
+    "comparativa_estrategias_arquitectura.csv",
+    "desglose_27_modelos_arquitectura.csv",
+    "resultados_gridsearch_lgbm.csv",
+    "predicciones_test_lgbm.csv"
+  ],
+  "outputs": [
+    "metricas_hito3_validation.csv",
+    "metricas_hito3_comparativa.csv",
+    "predicciones_test_comparativa.csv",
+    "resultados_randomsearch_lgbm.csv",
+    "resultados_randomsearch_xgb.csv",
+    "resultados_randomsearch_cb.csv",
+    "hito3_errores_por_distribuidora.csv",
+    "hito3_errores_por_tarifa.csv",
+    "hito3_errores_por_ubigeo.csv",
+    "hito3_errores_por_mes.csv",
+    "hito3_errores_por_rango_consumo.csv",
+    "hito3_peores_predicciones.csv",
+    "hito3_resumen_errores_campeon.json",
+    "hito3_analisis_errores_campeon.png"
+  ]
+}

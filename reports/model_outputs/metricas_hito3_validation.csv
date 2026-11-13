@@ -1,6 +1,6 @@
-MODELO,MAE_MWh,RMSE_MWh,R2,WAPE_pct,MEJORA_MAE_pct
-Referencia Temporal (Persistencia),14.646918296813965,87.54424383650961,0.9919800758361816,7.7781081199646,0.0
-Decision Tree Baseline (Hito 2),17.4234,102.2832,0.9891,9.252532958984375,-18.956081046686684
-LightGBM Avanzado (Hito 3),12.514969040148765,79.8452274468721,0.9933286657207114,6.645956644383539,14.555616502134425
-XGBoost Avanzado (Hito 3),12.88869571685791,79.47323215338766,0.993390679359436,6.844420909881592,12.00404442986828
-CatBoost Avanzado (Hito 3),12.681749054606275,79.87595233698994,0.9933235303993607,6.734523603013515,13.416946844273436
+MODELO,MAE_MWh,RMSE_MWh,R2,WAPE_pct,MEJORA_MAE_pct,HIPERPARAMETROS_SELECCIONADOS
+LightGBM Avanzado (Hito 3),11.35529534716855,70.96858583739385,0.9947295574925947,6.030123166312549,22.473145735554574,"{""modelo__colsample_bytree"": 0.8, ""modelo__learning_rate"": 0.03, ""modelo__min_child_samples"": 50, ""modelo__n_estimators"": 120, ""modelo__num_leaves"": 31, ""modelo__subsample"": 0.8}"
+XGBoost Avanzado (Hito 3),12.037300126270955,71.35305455227744,0.9946722981016308,6.39229541214733,17.81684367553713,"{""modelo__colsample_bytree"": 0.8, ""modelo__learning_rate"": 0.03, ""modelo__max_depth"": 7, ""modelo__min_child_weight"": 1, ""modelo__n_estimators"": 80, ""modelo__subsample"": 0.8}"
+CatBoost Avanzado (Hito 3),12.813040976365107,81.02232882257505,0.9931305143370092,6.804245319938514,12.520570351636092,"{""modelo__depth"": 7, ""modelo__iterations"": 120, ""modelo__l2_leaf_reg"": 5, ""modelo__learning_rate"": 0.05}"
+Referencia Temporal (Persistencia),14.646918741776163,87.54424483733393,0.9919800810511402,7.778108919192948,0.0,No aplica
+Decision Tree Baseline (Hito 2),17.423408156260248,102.2831716497095,0.9890522933841385,9.25253760003539,-18.956133118735334,"{""max_depth"": 8, ""min_samples_leaf"": 10, ""criterion"": ""squared_error""}"

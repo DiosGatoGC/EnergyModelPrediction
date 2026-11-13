@@ -1,0 +1,15 @@
+{
+  "modelo_campeon": "LightGBM Avanzado (Hito 3)",
+  "observaciones_test": 3934,
+  "media_residuo": -2.2119928851752753,
+  "mediana_residuo": 3.2417924145100585e-07,
+  "desviacion_residuo": 48.801247802421436,
+  "p1_residuo": -103.74036533436411,
+  "p5_residuo": -13.112926543332502,
+  "p95_residuo": 10.408534211632933,
+  "p99_residuo": 72.57562814791115,
+  "pct_subprediccion": 50.355871886120994,
+  "pct_sobreprediccion": 48.83070665988816,
+  "media_subprediccion": 6.412607150747817,
+  "media_sobreprediccion": 11.142818727699613
+}

@@ -40,3 +40,4 @@ data/raw/
 
 catboost_info/
 scratch/
+.env

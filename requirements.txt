@@ -12,3 +12,5 @@ lightgbm
 xgboost
 joblib
 catboost
+psycopg[binary]
+python-dotenv
