@@ -1,0 +1,5 @@
+Fuente_Variacion,Suma_Cuadrados,Grados_Libertad,F_estadistico,p_valor
+C(TARIFA),21785928.118645616,7.0,1364.189089097441,0.0
+importe_total_miles,27435789438.483597,1.0,12025800.819339454,0.0
+importe_total_miles:C(TARIFA),284190602.25824785,7.0,17795.418983914013,0.0
+Residual,93615402.47766827,41034.0,,

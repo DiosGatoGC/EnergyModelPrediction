@@ -1,0 +1,14 @@
+Estrategia,Algoritmo,N_Modelos,MAE_MWh,RMSE_MWh,R2,WAPE_pct,Mejora_MAE_pct,Diagnostico
+3. Por Tipo de Cliente (BT vs MT),XGBoost,2,8.7727,48.4181,0.9974,4.81,13.94,Punto óptimo: en Residencial (BT) logra récord de +18.04% y menor RMSE global (48.42 MWh).
+1. Global Unificado,XGBoost,1,8.7791,49.6273,0.9972,4.81,13.88,"Aprende de 33,174 filas combinadas; transfiere patrones entre distribuidoras."
+1. Global Unificado,LightGBM,1,8.8486,51.7197,0.997,4.85,13.2,"Aprende de 33,174 filas combinadas; transfiere patrones entre distribuidoras."
+1. Global Unificado,CatBoost,1,8.8983,50.9506,0.9971,4.88,12.71,"Aprende de 33,174 filas combinadas; transfiere patrones entre distribuidoras."
+3. Por Tipo de Cliente (BT vs MT),LightGBM,2,8.9012,50.4241,0.9972,4.88,12.68,Punto óptimo: en Residencial (BT) logra récord de +18.04% y menor RMSE global (48.42 MWh).
+3. Por Tipo de Cliente (BT vs MT),CatBoost,2,9.0152,51.9657,0.997,4.94,11.56,Punto óptimo: en Residencial (BT) logra récord de +18.04% y menor RMSE global (48.42 MWh).
+4. Matriz Cruzada (Dist x Cliente),CatBoost,4,9.5557,53.1057,0.9968,5.24,6.26,Sobre-fragmentación: grupos como ENOSA-MT sufren inanición de datos (data starvation).
+4. Matriz Cruzada (Dist x Cliente),LightGBM,4,9.8864,61.128,0.9958,5.42,3.02,Sobre-fragmentación: grupos como ENOSA-MT sufren inanición de datos (data starvation).
+2. Por Distribuidora,LightGBM,2,9.8954,60.7061,0.9959,5.42,2.93,"Hidrandina funciona bien (+10.9%), pero ENOSA se degrada (-5.5%) por pérdida de datos."
+2. Por Distribuidora,CatBoost,2,9.9397,57.3313,0.9963,5.45,2.5,"Hidrandina funciona bien (+10.9%), pero ENOSA se degrada (-5.5%) por pérdida de datos."
+4. Matriz Cruzada (Dist x Cliente),XGBoost,4,10.0469,62.724,0.9956,5.51,1.44,Sobre-fragmentación: grupos como ENOSA-MT sufren inanición de datos (data starvation).
+0. Referencia Temporal (Persistencia),Línea Base sin ML,0,10.1941,58.9707,0.9961,5.59,0.0,Benchmark base de persistencia: y(t+1) = y(t).
+2. Por Distribuidora,XGBoost,2,10.2589,62.4905,0.9956,5.62,-0.64,"Hidrandina funciona bien (+10.9%), pero ENOSA se degrada (-5.5%) por pérdida de datos."
