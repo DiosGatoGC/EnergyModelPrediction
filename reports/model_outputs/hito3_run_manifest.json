@@ -1,6 +1,6 @@
 {
-  "run_name": "hito3_oficial_validation_selection_v1",
-  "executed_at": "2026-11-25T13:46:19.384376-05:00",
+  "run_name": "hito3_global_and_ensembles_v3",
+  "executed_at": "2026-11-25T17:17:46.380960-05:00",
   "dataset": "data/processed/dataset_ml.parquet",
   "target": "TARGET_CONSUMO_MWH",
   "internal_training_target": "LOG_DELTA",
@@ -46,12 +46,12 @@
     "name": "LightGBM Avanzado (Hito 3)",
     "family": "LightGBM",
     "hyperparameters": {
-      "subsample": 0.8,
-      "num_leaves": 31,
-      "n_estimators": 120,
-      "min_child_samples": 20,
+      "colsample_bytree": 0.8,
       "learning_rate": 0.05,
-      "colsample_bytree": 0.8
+      "min_child_samples": 20,
+      "n_estimators": 120,
+      "num_leaves": 31,
+      "subsample": 0.8
     },
     "model_path": "models/modelo_campeon_hito3.joblib"
   },
@@ -64,6 +64,15 @@
       "WAPE_pct": 5.949273454917671,
       "MEJORA_MAE_pct": 25.57586074216347,
       "HIPERPARAMETROS_SELECCIONADOS": "{\"colsample_bytree\": 0.8, \"learning_rate\": 0.05, \"min_child_samples\": 20, \"n_estimators\": 120, \"num_leaves\": 31, \"subsample\": 0.8}"
+    },
+    {
+      "MODELO": "Blend Convexo (LGBM+XGB+CB)",
+      "MAE_MWh": 9.891362659126662,
+      "RMSE_MWh": 59.76760838937813,
+      "R2": 0.9952717931185372,
+      "WAPE_pct": 6.085053269906023,
+      "MEJORA_MAE_pct": 23.877284279731178,
+      "HIPERPARAMETROS_SELECCIONADOS": "{\"weights\": {\"LightGBM\": 0.0, \"XGBoost\": 0.0, \"CatBoost\": 1.0}}"
     },
     {
       "MODELO": "CatBoost Avanzado (Hito 3)",
@@ -84,6 +93,15 @@
       "HIPERPARAMETROS_SELECCIONADOS": "{\"colsample_bytree\": 0.8, \"learning_rate\": 0.03, \"max_depth\": 7, \"min_child_weight\": 1, \"n_estimators\": 120, \"subsample\": 0.8}"
     },
     {
+      "MODELO": "Stacking L1 (LGBM+XGB+CB)",
+      "MAE_MWh": 10.703478232842132,
+      "RMSE_MWh": 64.01275877826794,
+      "R2": 0.9945762732161664,
+      "WAPE_pct": 6.584657490040366,
+      "MEJORA_MAE_pct": 17.627342276755012,
+      "HIPERPARAMETROS_SELECCIONADOS": "{\"meta\": \"QuantileRegressor(q=0.5)\", \"coef\": [0.3259, -0.054, 0.3711]}"
+    },
+    {
       "MODELO": "Referencia Temporal (Persistencia)",
       "MAE_MWh": 12.993969757299315,
       "RMSE_MWh": 77.64710934763295,
@@ -99,10 +117,28 @@
       "R2": 0.9866150398198743,
       "WAPE_pct": 9.228018470990031,
       "MEJORA_MAE_pct": -15.440538573857477,
-      "HIPERPARAMETROS_SELECCIONADOS": "{\"max_depth\": 8, \"min_samples_leaf\": 10, \"criterion\": \"squared_error\"}"
+      "HIPERPARAMETROS_SELECCIONADOS": "{\"max_depth\": 10, \"min_samples_leaf\": 10, \"criterion\": \"squared_error\"}"
     }
   ],
   "test_metrics": [
+    {
+      "MODELO": "Stacking L1 (LGBM+XGB+CB)",
+      "MAE_MWh": 7.620837504629964,
+      "RMSE_MWh": 40.52114490930573,
+      "R2": 0.9977807290804436,
+      "WAPE_pct": 4.723775194854926,
+      "MEJORA_MAE_pct": 19.367520966478608,
+      "SELECCIONADO_EN_VALIDATION": false
+    },
+    {
+      "MODELO": "Blend Convexo (LGBM+XGB+CB)",
+      "MAE_MWh": 7.713020861684442,
+      "RMSE_MWh": 41.860876686199134,
+      "R2": 0.9976315536806338,
+      "WAPE_pct": 4.780915037446746,
+      "MEJORA_MAE_pct": 18.39217244337744,
+      "SELECCIONADO_EN_VALIDATION": false
+    },
     {
       "MODELO": "CatBoost Avanzado (Hito 3)",
       "MAE_MWh": 7.753291815434411,
@@ -149,28 +185,20 @@
       "SELECCIONADO_EN_VALIDATION": false
     }
   ],
-  "future_holdout": "No participó en entrenamiento, tuning, selección ni análisis de errores de esta corrida. Fue evaluado previamente como evaluación temporal extendida y sus artefactos históricos no son outputs oficiales de esta corrida.",
-  "obsolete_or_nonofficial_artifacts": [
-    "predicciones_evaluacion_completa_2026.csv",
-    "matriz_completa_estrategias_algoritmos.csv",
-    "comparativa_estrategias_arquitectura.csv",
-    "desglose_27_modelos_arquitectura.csv",
-    "resultados_gridsearch_lgbm.csv",
-    "predicciones_test_lgbm.csv"
-  ],
   "outputs": [
-    "metricas_hito3_validation.csv",
-    "metricas_hito3_comparativa.csv",
-    "predicciones_test_comparativa.csv",
-    "resultados_randomsearch_lgbm.csv",
-    "resultados_randomsearch_xgb.csv",
-    "resultados_randomsearch_cb.csv",
-    "hito3_errores_por_distribuidora.csv",
-    "hito3_errores_por_tarifa.csv",
-    "hito3_errores_por_ubigeo.csv",
-    "hito3_errores_por_mes.csv",
-    "hito3_errores_por_rango_consumo.csv",
-    "hito3_peores_predicciones.csv",
+    "metricas_hito3_validation.parquet",
+    "metricas_hito3_comparativa.parquet",
+    "predicciones_test_comparativa.parquet",
+    "serie_historica_real_completa.parquet",
+    "resultados_randomsearch_lgbm.parquet",
+    "resultados_randomsearch_xgb.parquet",
+    "resultados_randomsearch_cb.parquet",
+    "hito3_errores_por_distribuidora.parquet",
+    "hito3_errores_por_tarifa.parquet",
+    "hito3_errores_por_ubigeo.parquet",
+    "hito3_errores_por_mes.parquet",
+    "hito3_errores_por_rango_consumo.parquet",
+    "hito3_peores_predicciones.parquet",
     "hito3_resumen_errores_campeon.json",
     "hito3_analisis_errores_campeon.png"
   ]

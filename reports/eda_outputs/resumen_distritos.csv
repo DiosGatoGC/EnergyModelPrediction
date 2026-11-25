@@ -493,8 +493,8 @@ UBIGEO,facturas,energia_gwh,mediana_consumo,DEPARTAMENTO,PROVINCIA,DISTRITO,DIST
 190303,1,0.0,349.0,Pasco,Oxapampa,Huancabamba,ENOSA
 100901,32,0.0,12.5,Huanuco,Puerto Inca,Puerto inca,HIDRANDINA
 120130,32,0.0,10.5,Junin,Huancayo,San jeronimo de tunan,ENOSA
-120606,1,0.0,325.0,Junin,Satipo,Pangoa,HIDRANDINA
 090507,20,0.0,17.0,Huancavelica,Churcampa,Paucarbamba,ENOSA
+120606,1,0.0,325.0,Junin,Satipo,Pangoa,HIDRANDINA
 150141,1,0.0,320.0,Lima,Lima,Surquillo,ENOSA
 140303,6,0.0,51.0,Lambayeque,Lambayeque,Illimo,HIDRANDINA
 151101,1,0.0,276.0,Lima,Prov Const del Callao,Callao,HIDRANDINA
@@ -521,10 +521,10 @@ UBIGEO,facturas,energia_gwh,mediana_consumo,DEPARTAMENTO,PROVINCIA,DISTRITO,DIST
 150144,2,0.0,9.5,Lima,Lima,Pueblo Libre,ENOSA
 010509,32,0.0,0.0,Amazonas,Luya,Luya,ENOSA
 100313,1,0.0,9.0,Huanuco,Dos de Mayo,Pachas,ENOSA
-061311,6,0.0,0.0,Cajamarca,Santa Cruz,Yauyucan,HIDRANDINA
-090101,1,0.0,2.0,Huancavelica,Huancavelica,Huancavelica,HIDRANDINA
 101104,26,0.0,0.0,Huanuco,Yarowilca,Chupan,ENOSA
-150143,15,0.0,0.0,Lima,Lima,Villa Maria del Triunfo,ENOSA
+090101,1,0.0,2.0,Huancavelica,Huancavelica,Huancavelica,HIDRANDINA
+061311,6,0.0,0.0,Cajamarca,Santa Cruz,Yauyucan,HIDRANDINA
 120114,25,0.0,0.0,Junin,Huancayo,El tambo,ENOSA
-100307,6,0.0,0.0,Huanuco,Dos de Mayo,Chuquis,ENOSA
 010601,17,0.0,0.0,Amazonas,Rodriguez de Mendoza,San nicolas,HIDRANDINA
+100307,6,0.0,0.0,Huanuco,Dos de Mayo,Chuquis,ENOSA
+150143,15,0.0,0.0,Lima,Lima,Villa Maria del Triunfo,ENOSA

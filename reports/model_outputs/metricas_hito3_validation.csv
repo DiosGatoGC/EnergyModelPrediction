@@ -1,6 +1,8 @@
 MODELO,MAE_MWh,RMSE_MWh,R2,WAPE_pct,MEJORA_MAE_pct,HIPERPARAMETROS_SELECCIONADOS
 LightGBM Avanzado (Hito 3),9.670650147293605,57.05586545503822,0.9956911109668071,5.949273454917671,25.57586074216347,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.05, ""min_child_samples"": 20, ""n_estimators"": 120, ""num_leaves"": 31, ""subsample"": 0.8}"
+Blend Convexo (LGBM+XGB+CB),9.891362659126662,59.76760838937813,0.9952717931185372,6.085053269906023,23.877284279731178,"{""weights"": {""LightGBM"": 0.0, ""XGBoost"": 0.0, ""CatBoost"": 1.0}}"
 CatBoost Avanzado (Hito 3),9.891362659126663,59.76760838937818,0.9952717931185372,6.085053269906024,23.877284279731168,"{""depth"": 6, ""iterations"": 120, ""l2_leaf_reg"": 3, ""learning_rate"": 0.05}"
 XGBoost Avanzado (Hito 3),10.201610220764127,59.13642247093764,0.9953711318463632,6.2759140243320575,21.48965703853966,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.03, ""max_depth"": 7, ""min_child_weight"": 1, ""n_estimators"": 120, ""subsample"": 0.8}"
+Stacking L1 (LGBM+XGB+CB),10.703478232842132,64.01275877826794,0.9945762732161664,6.584657490040366,17.627342276755012,"{""meta"": ""QuantileRegressor(q=0.5)"", ""coef"": [0.3259, -0.054, 0.3711]}"
 Referencia Temporal (Persistencia),12.993969757299315,77.64710934763295,0.9920197719936249,7.993741700265937,0.0,No aplica
-Decision Tree Baseline (Hito 2),15.00030866995049,100.56021291524603,0.9866150398198743,9.228018470990031,-15.440538573857477,"{""max_depth"": 8, ""min_samples_leaf"": 10, ""criterion"": ""squared_error""}"
+Decision Tree Baseline (Hito 2),15.00030866995049,100.56021291524603,0.9866150398198743,9.228018470990031,-15.440538573857477,"{""max_depth"": 10, ""min_samples_leaf"": 10, ""criterion"": ""squared_error""}"

@@ -1,28 +1,28 @@
-Arquitectura,Subgrupo,Algoritmo,Filas_Train,Filas_Test,MAE_Ref,MAE_Test,RMSE_Test,R2,Mejora_pct
-1. Global Unificado,Todo el Sistema,LightGBM,22488,3934,10.1941,8.8486,51.7197,0.997,13.2
-1. Global Unificado,Todo el Sistema,XGBoost,22488,3934,10.1941,8.7791,49.6273,0.9972,13.88
-1. Global Unificado,Todo el Sistema,CatBoost,22488,3934,10.1941,8.8983,50.9506,0.9971,12.71
-2. Por Distribuidora,ENOSA,LightGBM,5425,2072,11.57,12.0172,68.8915,0.9912,-3.87
-2. Por Distribuidora,ENOSA,XGBoost,5425,2072,11.57,12.5937,71.4837,0.9905,-8.85
-2. Por Distribuidora,ENOSA,CatBoost,5425,2072,11.57,11.1804,62.396,0.9928,3.37
-2. Por Distribuidora,HIDRANDINA,LightGBM,17063,1862,8.6631,7.5343,50.0477,0.9981,13.03
-2. Por Distribuidora,HIDRANDINA,XGBoost,17063,1862,8.6631,7.6608,50.6391,0.998,11.57
-2. Por Distribuidora,HIDRANDINA,CatBoost,17063,1862,8.6631,8.5591,51.1088,0.998,1.2
-3. Por Tipo Cliente,Baja Tensión (Residencial),LightGBM,14811,3053,9.2783,7.7579,51.1797,0.9976,16.39
-3. Por Tipo Cliente,Baja Tensión (Residencial),XGBoost,14811,3053,9.2783,7.6046,48.6379,0.9979,18.04
-3. Por Tipo Cliente,Baja Tensión (Residencial),CatBoost,14811,3053,9.2783,7.8437,53.2012,0.9974,15.46
-3. Por Tipo Cliente,Media Tensión (Industrial),LightGBM,7647,881,13.368,12.8632,47.7133,0.9836,3.78
-3. Por Tipo Cliente,Media Tensión (Industrial),XGBoost,7647,881,13.368,12.8204,47.6484,0.9837,4.1
-3. Por Tipo Cliente,Media Tensión (Industrial),CatBoost,7647,881,13.368,13.0749,47.4361,0.9838,2.19
-4. Matriz Cruzada,ENOSA_BT,LightGBM,3552,1398,9.8133,10.2135,74.0451,0.9924,-4.08
-4. Matriz Cruzada,ENOSA_BT,XGBoost,3552,1398,9.8133,10.767,80.0067,0.9911,-9.72
-4. Matriz Cruzada,ENOSA_BT,CatBoost,3552,1398,9.8133,8.7055,59.2454,0.9951,11.29
-4. Matriz Cruzada,ENOSA_MT,LightGBM,1873,674,15.2137,15.6356,54.846,0.9816,-2.77
-4. Matriz Cruzada,ENOSA_MT,XGBoost,1873,674,15.2137,16.3637,57.5564,0.9797,-7.56
-4. Matriz Cruzada,ENOSA_MT,CatBoost,1873,674,15.2137,15.3411,51.5374,0.9837,-0.84
-4. Matriz Cruzada,HIDRANDINA_BT,LightGBM,11259,1655,8.8263,7.6304,53.2085,0.998,13.55
-4. Matriz Cruzada,HIDRANDINA_BT,XGBoost,11259,1655,8.8263,7.251,48.9902,0.9983,17.85
-4. Matriz Cruzada,HIDRANDINA_BT,CatBoost,11259,1655,8.8263,8.2248,49.6079,0.9983,6.82
-4. Matriz Cruzada,HIDRANDINA_MT,LightGBM,5774,207,7.3582,6.9956,39.4484,0.9716,4.93
-4. Matriz Cruzada,HIDRANDINA_MT,XGBoost,5774,207,7.3582,6.9706,39.5623,0.9714,5.27
-4. Matriz Cruzada,HIDRANDINA_MT,CatBoost,5774,207,7.3582,7.1,39.6017,0.9713,3.51
+Estrategia,Segmento,Algoritmo,VAL_OBSERVACIONES,VAL_MAE_MWh,VAL_RMSE_MWh,VAL_WAPE_pct,HIPERPARAMETROS
+Dist_x_Tipo,ENOSA_MT,LightGBM,512,18.07303273975009,61.57256928842268,12.648203580758238,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.03, ""min_child_samples"": 50, ""n_estimators"": 80, ""num_leaves"": 15, ""subsample"": 0.8}"
+Dist_x_Tipo,ENOSA_MT,XGBoost,512,18.2251684844252,63.29360036233285,12.754674027543233,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.03, ""max_depth"": 4, ""min_child_weight"": 5, ""n_estimators"": 80, ""subsample"": 0.8}"
+Dist_x_Tipo,ENOSA_MT,CatBoost,512,18.556191590827957,64.07605320214014,12.986336731861167,"{""depth"": 5, ""iterations"": 80, ""l2_leaf_reg"": 5, ""learning_rate"": 0.03}"
+Dist_x_Tipo,ENOSA_OTROS,LightGBM,1060,11.996212200461311,95.46481129891282,7.202281815450229,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.03, ""min_child_samples"": 50, ""n_estimators"": 80, ""num_leaves"": 15, ""subsample"": 0.8}"
+Dist_x_Tipo,ENOSA_OTROS,XGBoost,1060,12.267271019150352,97.22089007595702,7.365020017154132,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.03, ""max_depth"": 4, ""min_child_weight"": 5, ""n_estimators"": 80, ""subsample"": 0.8}"
+Dist_x_Tipo,ENOSA_OTROS,CatBoost,1060,12.950361731443287,104.21720170642331,7.775133787504174,"{""depth"": 5, ""iterations"": 80, ""l2_leaf_reg"": 5, ""learning_rate"": 0.03}"
+Dist_x_Tipo,HIDRANDINA_MT,LightGBM,813,7.54998419386172,26.13941559796599,8.548894039024264,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.03, ""min_child_samples"": 50, ""n_estimators"": 80, ""num_leaves"": 15, ""subsample"": 0.8}"
+Dist_x_Tipo,HIDRANDINA_MT,CatBoost,813,7.586377973430909,26.17476205425694,8.590102941881248,"{""depth"": 5, ""iterations"": 120, ""l2_leaf_reg"": 5, ""learning_rate"": 0.05}"
+Dist_x_Tipo,HIDRANDINA_MT,XGBoost,813,7.979150558463216,27.493212614551304,9.034841781679717,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.03, ""max_depth"": 6, ""min_child_weight"": 5, ""n_estimators"": 160, ""subsample"": 0.8}"
+Dist_x_Tipo,HIDRANDINA_OTROS,LightGBM,1443,8.388313179910307,49.84761970861651,4.024941989340394,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.03, ""min_child_samples"": 50, ""n_estimators"": 160, ""num_leaves"": 31, ""subsample"": 0.8}"
+Dist_x_Tipo,HIDRANDINA_OTROS,CatBoost,1443,8.712608748601493,51.113246515963006,4.180547869019308,"{""depth"": 5, ""iterations"": 120, ""l2_leaf_reg"": 5, ""learning_rate"": 0.05}"
+Dist_x_Tipo,HIDRANDINA_OTROS,XGBoost,1443,10.479960824842099,64.06574235763861,5.028571712316586,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.03, ""max_depth"": 4, ""min_child_weight"": 5, ""n_estimators"": 80, ""subsample"": 0.8}"
+Distribuidora,ENOSA,LightGBM,1572,13.69206034824038,83.36248159559108,8.619404441211117,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.03, ""min_child_samples"": 50, ""n_estimators"": 80, ""num_leaves"": 15, ""subsample"": 0.8}"
+Distribuidora,ENOSA,XGBoost,1572,14.312663796542061,90.95113244540285,9.010085754503013,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.03, ""max_depth"": 6, ""min_child_weight"": 1, ""n_estimators"": 80, ""subsample"": 0.8}"
+Distribuidora,ENOSA,CatBoost,1572,14.675346767265685,94.31755429508398,9.238401371663478,"{""depth"": 5, ""iterations"": 80, ""l2_leaf_reg"": 5, ""learning_rate"": 0.03}"
+Distribuidora,HIDRANDINA,LightGBM,2256,8.36333572326312,44.96085793885258,5.06469438236891,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.03, ""min_child_samples"": 50, ""n_estimators"": 160, ""num_leaves"": 31, ""subsample"": 0.8}"
+Distribuidora,HIDRANDINA,CatBoost,2256,8.769035746724557,48.730399752289074,5.310379441266722,"{""depth"": 5, ""iterations"": 80, ""l2_leaf_reg"": 5, ""learning_rate"": 0.03}"
+Distribuidora,HIDRANDINA,XGBoost,2256,8.86208643738637,50.48155339401364,5.366729362621614,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.03, ""max_depth"": 6, ""min_child_weight"": 1, ""n_estimators"": 120, ""subsample"": 0.8}"
+Global,GLOBAL,LightGBM,3828,9.725308857812818,57.507663104107515,5.98289886899213,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.05, ""min_child_samples"": 20, ""n_estimators"": 80, ""num_leaves"": 31, ""subsample"": 0.8}"
+Global,GLOBAL,CatBoost,3828,10.357345963114643,64.54247476118506,6.371720873285963,"{""depth"": 5, ""iterations"": 120, ""l2_leaf_reg"": 5, ""learning_rate"": 0.03}"
+Global,GLOBAL,XGBoost,3828,10.685856344173251,63.24345508931931,6.573816705513316,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.03, ""max_depth"": 6, ""min_child_weight"": 1, ""n_estimators"": 80, ""subsample"": 0.8}"
+TipoCliente,MT,CatBoost,1325,10.813004540458746,40.691414657321424,9.883568349706382,"{""depth"": 6, ""iterations"": 160, ""l2_leaf_reg"": 5, ""learning_rate"": 0.03}"
+TipoCliente,MT,LightGBM,1325,10.977855279900266,41.30575392628899,10.034249276979976,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.03, ""min_child_samples"": 50, ""n_estimators"": 80, ""num_leaves"": 31, ""subsample"": 0.8}"
+TipoCliente,MT,XGBoost,1325,11.318890834455281,42.68284661764402,10.345970982127943,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.03, ""max_depth"": 6, ""min_child_weight"": 1, ""n_estimators"": 80, ""subsample"": 0.8}"
+TipoCliente,OTROS,CatBoost,2503,9.60530428684435,68.91350713438368,5.037224970769944,"{""depth"": 6, ""iterations"": 160, ""l2_leaf_reg"": 7, ""learning_rate"": 0.05}"
+TipoCliente,OTROS,LightGBM,2503,9.833676455718079,69.27936855337349,5.1569881721559945,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.03, ""min_child_samples"": 50, ""n_estimators"": 80, ""num_leaves"": 31, ""subsample"": 0.8}"
+TipoCliente,OTROS,XGBoost,2503,11.355970766936947,77.56413345665246,5.9553115451942835,"{""colsample_bytree"": 0.8, ""learning_rate"": 0.03, ""max_depth"": 4, ""min_child_weight"": 5, ""n_estimators"": 80, ""subsample"": 0.8}"

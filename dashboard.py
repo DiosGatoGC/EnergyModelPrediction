@@ -177,8 +177,15 @@ def build_product_series(
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     cube = pd.read_parquet(CUBE_PATH)
     cube["PERIODO"] = cube["PERIODO"].astype(int)
-    model = load_champion_model()
-    feature_names = list(model.feature_name_)
+    artifact = load_champion_model()
+    if isinstance(artifact, dict) and "models" in artifact:
+        mode = artifact.get("mode") or artifact.get("strategy", "global")
+        models_map = artifact["models"]
+        feature_names = list(artifact["features"])
+    else:
+        mode = "global"
+        models_map = {"GLOBAL": artifact}
+        feature_names = list(artifact.feature_name_)
 
     # Detectar meses anómalos por caída brusca de demanda GWh vs mediana móvil centrada de 5 meses
     monthly_tot = (
@@ -265,8 +272,38 @@ def build_product_series(
         X_step = pd.DataFrame(rows)
         for col in ("DISTRIBUIDORA", "UBIGEO", "TARIFA"):
             X_step[col] = X_step[col].astype("category")
-        pred_delta = model.predict(X_step[feature_names])
-        pred_mwh = np.clip(np.expm1(np.log1p(np.array(base_consumos)) + pred_delta), 0, None)
+
+        if mode in {"global", "Global"}:
+            pred_delta = models_map["GLOBAL"].predict(X_step[feature_names])
+            pred_mwh = np.clip(np.expm1(np.log1p(np.array(base_consumos)) + pred_delta), 0, None)
+        elif mode == "stacking_l1":
+            deltas = np.column_stack([models_map[n].predict(X_step[feature_names]) for n in artifact["model_order"]])
+            pred_delta = artifact["stacker"].predict(deltas)
+            pred_mwh = np.clip(np.expm1(np.log1p(np.array(base_consumos)) + pred_delta), 0, None)
+        elif mode == "blend":
+            levels = np.column_stack([
+                np.clip(np.expm1(np.log1p(np.array(base_consumos)) + models_map[n].predict(X_step[feature_names])), 0, None)
+                for n in artifact["model_order"]
+            ])
+            pred_mwh = levels @ artifact["weights"]
+        else:
+            if mode == "Distribuidora":
+                seg_col = X_step["DISTRIBUIDORA"].astype(str)
+            elif mode == "TipoCliente":
+                seg_col = np.where(X_step["TARIFA"].astype(str).str.startswith("MT"), "MT", "OTROS")
+            else:
+                seg_col = (
+                    X_step["DISTRIBUIDORA"].astype(str)
+                    + "_"
+                    + np.where(X_step["TARIFA"].astype(str).str.startswith("MT"), "MT", "OTROS")
+                )
+            seg_series = pd.Series(seg_col, index=X_step.index)
+            pred_delta = np.zeros(len(X_step))
+            for seg_key, mod in models_map.items():
+                mask = (seg_series == seg_key).to_numpy()
+                if mask.any():
+                    pred_delta[mask] = mod.predict(X_step.loc[mask, feature_names])
+            pred_mwh = np.clip(np.expm1(np.log1p(np.array(base_consumos)) + pred_delta), 0, None)
 
         out = []
         for (key, n_reg, c_med), val in zip(valid_keys, pred_mwh):
@@ -528,118 +565,170 @@ if is_product:
         anom_view["Diferencia_GWh"] = anom_view["Reconstruido_GWh"] - anom_view["Real_Original_GWh"]
         st.dataframe(anom_view.round(3), width="stretch", hide_index=True)
 
-    # Mapa territorial (GeoJSON)
+    # Mapa territorial (GeoJSON) — Pronóstico futuro
     if GEOJSON_PATH.is_file():
-        st.markdown("### Mapa Territorial (GeoJSON)")
+        st.markdown("### Mapa de Pronóstico Futuro (GeoJSON)")
         geo_data, geo_meta = load_geojson_concesion()
-        map_metric = st.radio(
-            "Métrica a visualizar en el mapa:",
-            ["Demanda Total Limpia (GWh)", "Pronóstico Futuro (GWh)", "Último Mes Real vs Reconstruido (GWh)"],
-            horizontal=True,
+
+        future_periods = sorted(
+            filtered.loc[filtered["TIPO"] == "Pronóstico Futuro", "PERIODO"].astype(int).unique().tolist()
         )
-
-        clean_mask = filtered["TIPO"].isin(["Real", "Reconstruido (Anomalía)", "Reconstruido (Faltante)"])
-        fut_mask = filtered["TIPO"] == "Pronóstico Futuro"
-        last_hist_mask = clean_mask & (filtered["PERIODO"] == 202608)
-
-        if map_metric == "Pronóstico Futuro (GWh)":
-            map_src = filtered.loc[fut_mask]
-        elif map_metric == "Último Mes Real vs Reconstruido (GWh)":
-            map_src = filtered.loc[last_hist_mask]
+        if not future_periods:
+            st.info("No hay periodos futuros disponibles para los filtros seleccionados.")
         else:
-            map_src = filtered.loc[clean_mask]
+            col_m1, col_m2 = st.columns([1, 1.4])
+            with col_m1:
+                selected_map_period = st.selectbox(
+                    "Mes futuro a proyectar:",
+                    future_periods,
+                    index=0,
+                    format_func=lambda p: f"{str(p)[:4]}-{str(p)[4:]}",
+                )
+            with col_m2:
+                map_metric = st.radio(
+                    "Métrica del mapa:",
+                    ["Consumo proyectado (GWh)", "Variación vs mes anterior (%)", "Variación interanual YoY (%)"],
+                    horizontal=True,
+                )
 
-        agg_geo = (
-            map_src.groupby("UBIGEO", as_index=False)
-            .agg(
-                consumo_mwh=("consumo_total_mwh", "sum"),
-                DISTRIBUIDORA=("DISTRIBUIDORA", "first"),
+            clean_all = filtered.loc[
+                filtered["TIPO"].isin(["Real", "Reconstruido (Anomalía)", "Reconstruido (Faltante)", "Pronóstico Futuro"])
+            ].copy()
+            prev_period = add_months_ym(selected_map_period, -1)
+            yoy_period = add_months_ym(selected_map_period, -12)
+
+            curr_geo = (
+                clean_all.loc[clean_all["PERIODO"] == selected_map_period]
+                .groupby("UBIGEO", as_index=False)
+                .agg(consumo_mwh=("consumo_total_mwh", "sum"), DISTRIBUIDORA=("DISTRIBUIDORA", "first"))
             )
-        )
-        agg_geo["UBIGEO"] = agg_geo["UBIGEO"].astype(str).str.strip().str.zfill(6)
-        agg_geo["Energia_GWh"] = agg_geo["consumo_mwh"] / 1e3
+            prev_geo = (
+                clean_all.loc[clean_all["PERIODO"] == prev_period]
+                .groupby("UBIGEO", as_index=False)["consumo_total_mwh"]
+                .sum()
+                .rename(columns={"consumo_total_mwh": "prev_mwh"})
+            )
+            yoy_geo = (
+                clean_all.loc[clean_all["PERIODO"] == yoy_period]
+                .groupby("UBIGEO", as_index=False)["consumo_total_mwh"]
+                .sum()
+                .rename(columns={"consumo_total_mwh": "yoy_mwh"})
+            )
 
-        map_df = geo_meta.merge(agg_geo, on="UBIGEO", how="inner")
-        map_df["Energia_GWh"] = map_df["Energia_GWh"].fillna(0.0)
-        map_df["Color_Log"] = np.log1p(map_df["Energia_GWh"])
+            agg_geo = curr_geo.merge(prev_geo, on="UBIGEO", how="left").merge(yoy_geo, on="UBIGEO", how="left")
+            agg_geo["UBIGEO"] = agg_geo["UBIGEO"].astype(str).str.strip().str.zfill(6)
+            agg_geo["Energia_GWh"] = agg_geo["consumo_mwh"] / 1e3
+            agg_geo["Var_MoM_pct"] = np.where(agg_geo["prev_mwh"] > 0, (agg_geo["consumo_mwh"] - agg_geo["prev_mwh"]) / agg_geo["prev_mwh"] * 100, np.nan)
+            agg_geo["Var_YoY_pct"] = np.where(agg_geo["yoy_mwh"] > 0, (agg_geo["consumo_mwh"] - agg_geo["yoy_mwh"]) / agg_geo["yoy_mwh"] * 100, np.nan)
 
-        fig_map = go.Figure()
-        if not map_df.empty:
-            fig_map.add_trace(go.Choropleth(
-                geojson=geo_data,
-                locations=map_df["UBIGEO"],
-                z=map_df["Color_Log"],
-                featureidkey="properties.ubigeo",
-                colorscale="YlOrRd",
-                marker_line_color="#334155",
-                marker_line_width=0.6,
-                colorbar=dict(
-                    title="log1p(GWh)",
+            map_df = geo_meta.merge(agg_geo, on="UBIGEO", how="inner")
+
+            if map_metric == "Consumo proyectado (GWh)":
+                z_vals = np.log1p(map_df["Energia_GWh"].fillna(0.0))
+                max_gwh = float(map_df["Energia_GWh"].max()) if not map_df.empty else 1.0
+                cand_ticks = [0, 0.5, 1, 2, 5, 10, 20, 30, 50]
+                tick_gwh = [t for t in cand_ticks if t <= max(max_gwh * 1.05, 1.0)]
+                colorbar_cfg = dict(
+                    title="GWh",
                     thickness=14,
                     len=0.75,
                     x=0.92,
-                ),
-                customdata=np.stack([
-                    map_df["DISTRITO"],
-                    map_df["PROVINCIA"],
-                    map_df["DEPARTAMENTO"],
-                    map_df["DISTRIBUIDORA"],
-                    map_df["Energia_GWh"],
-                ], axis=-1),
-                hovertemplate=(
-                    "<b>%{customdata[0]}</b> (%{location})<br>"
-                    "Provincia: %{customdata[1]} | Dpto: %{customdata[2]}<br>"
-                    "Distribuidora: %{customdata[3]}<br>"
-                    "Energía: <b>%{customdata[4]:.3f} GWh</b><extra></extra>"
-                ),
-            ))
-        if selected_ubigeo != "Todos" and not map_df.empty:
-            fig_map.update_geos(
-                visible=True,
-                resolution=50,
-                scope="south america",
-                showcountries=True,
-                countrycolor="#64748b",
-                countrywidth=1.2,
-                showcoastlines=True,
-                coastlinecolor="#64748b",
-                coastlinewidth=1.0,
-                showland=True,
-                landcolor="#0f172a",
-                showocean=True,
-                oceancolor="#020617",
-                showlakes=False,
-                fitbounds="locations",
-                bgcolor="rgba(0,0,0,0)",
+                    tickvals=np.log1p(tick_gwh).tolist(),
+                    ticktext=[f"{t:g}" for t in tick_gwh],
+                )
+                cscale = "YlOrRd"
+                zmin, zmax, zmid = None, None, None
+            elif map_metric == "Variación vs mes anterior (%)":
+                z_vals = map_df["Var_MoM_pct"].fillna(0.0).clip(-40, 40)
+                cscale = "RdBu_r"
+                colorbar_cfg = dict(title="Var % MoM", thickness=14, len=0.75, x=0.92)
+                zmin, zmax, zmid = -40, 40, 0
+            else:
+                z_vals = map_df["Var_YoY_pct"].fillna(0.0).clip(-40, 40)
+                cscale = "RdBu_r"
+                colorbar_cfg = dict(title="Var % YoY", thickness=14, len=0.75, x=0.92)
+                zmin, zmax, zmid = -40, 40, 0
+
+            fig_map = go.Figure()
+            if not map_df.empty:
+                fig_map.add_trace(go.Choropleth(
+                    geojson=geo_data,
+                    locations=map_df["UBIGEO"],
+                    z=z_vals,
+                    zmin=zmin,
+                    zmax=zmax,
+                    zmid=zmid,
+                    featureidkey="properties.ubigeo",
+                    colorscale=cscale,
+                    marker_line_color="#334155",
+                    marker_line_width=0.6,
+                    colorbar=colorbar_cfg,
+                    customdata=np.stack([
+                        map_df["DISTRITO"],
+                        map_df["PROVINCIA"],
+                        map_df["DEPARTAMENTO"],
+                        map_df["DISTRIBUIDORA"],
+                        map_df["Energia_GWh"],
+                        map_df["Var_MoM_pct"].fillna(0.0),
+                        map_df["Var_YoY_pct"].fillna(0.0),
+                    ], axis=-1),
+                    hovertemplate=(
+                        "<b>%{customdata[0]}</b> (%{location})<br>"
+                        "Provincia: %{customdata[1]} | Dpto: %{customdata[2]}<br>"
+                        "Distribuidora: %{customdata[3]}<br>"
+                        "Pronóstico: <b>%{customdata[4]:.3f} GWh</b><br>"
+                        "Var vs mes anterior: <b>%{customdata[5]:+.2f}%</b><br>"
+                        "Var interanual (YoY): <b>%{customdata[6]:+.2f}%</b><extra></extra>"
+                    ),
+                ))
+            if selected_ubigeo != "Todos" and not map_df.empty:
+                fig_map.update_geos(
+                    visible=True,
+                    resolution=50,
+                    scope="south america",
+                    showcountries=True,
+                    countrycolor="#64748b",
+                    countrywidth=1.2,
+                    showcoastlines=True,
+                    coastlinecolor="#64748b",
+                    coastlinewidth=1.0,
+                    showland=True,
+                    landcolor="#0f172a",
+                    showocean=True,
+                    oceancolor="#020617",
+                    showlakes=False,
+                    fitbounds="locations",
+                    bgcolor="rgba(0,0,0,0)",
+                )
+            else:
+                fig_map.update_geos(
+                    visible=True,
+                    resolution=50,
+                    scope="south america",
+                    showcountries=True,
+                    countrycolor="#64748b",
+                    countrywidth=1.2,
+                    showcoastlines=True,
+                    coastlinecolor="#64748b",
+                    coastlinewidth=1.0,
+                    showland=True,
+                    landcolor="#0f172a",
+                    showocean=True,
+                    oceancolor="#020617",
+                    showlakes=False,
+                    lataxis_range=[-11.8, -2.5],
+                    lonaxis_range=[-83.5, -71.5],
+                    bgcolor="rgba(0,0,0,0)",
+                )
+            p_label = f"{str(selected_map_period)[:4]}-{str(selected_map_period)[4:]}"
+            fig_map.update_layout(
+                height=820,
+                margin=dict(l=0, r=0, t=40, b=0),
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                title=f"{map_metric} — {p_label} (Pronóstico Futuro) · {len(map_df)} distritos",
             )
-        else:
-            fig_map.update_geos(
-                visible=True,
-                resolution=50,
-                scope="south america",
-                showcountries=True,
-                countrycolor="#64748b",
-                countrywidth=1.2,
-                showcoastlines=True,
-                coastlinecolor="#64748b",
-                coastlinewidth=1.0,
-                showland=True,
-                landcolor="#0f172a",
-                showocean=True,
-                oceancolor="#020617",
-                showlakes=False,
-                lataxis_range=[-11.8, -2.5],
-                lonaxis_range=[-83.5, -71.5],
-                bgcolor="rgba(0,0,0,0)",
-            )
-        fig_map.update_layout(
-            height=820,
-            margin=dict(l=0, r=0, t=40, b=0),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            title=f"{map_metric} — Distritos Seleccionados ({len(map_df)} de {len(geo_meta)})",
-        )
-        st.plotly_chart(fig_map, width="stretch")
+            st.plotly_chart(fig_map, width="stretch")
 
     st.markdown("#### Resumen Mensual (Real vs Reconstruido vs Pronóstico Futuro)")
     pivot_prod = (
