@@ -1,15 +1,15 @@
 {
   "modelo_campeon": "LightGBM Avanzado (Hito 3)",
-  "observaciones_test": 3934,
-  "media_residuo": -2.2119928851752753,
-  "mediana_residuo": 3.2417924145100585e-07,
-  "desviacion_residuo": 48.801247802421436,
-  "p1_residuo": -103.74036533436411,
-  "p5_residuo": -13.112926543332502,
-  "p95_residuo": 10.408534211632933,
-  "p99_residuo": 72.57562814791115,
-  "pct_subprediccion": 50.355871886120994,
-  "pct_sobreprediccion": 48.83070665988816,
-  "media_subprediccion": 6.412607150747817,
-  "media_sobreprediccion": 11.142818727699613
+  "observaciones_test": 4848,
+  "media_residuo": -2.480041088383592,
+  "mediana_residuo": -0.0005238310749179076,
+  "desviacion_residuo": 42.704349677884984,
+  "p1_residuo": -98.6905788515421,
+  "p5_residuo": -16.852952964514742,
+  "p95_residuo": 7.774212824549337,
+  "p99_residuo": 56.215873722957134,
+  "pct_subprediccion": 47.56600660066007,
+  "pct_sobreprediccion": 51.54702970297029,
+  "media_subprediccion": 5.761256580244226,
+  "media_sobreprediccion": 10.127529760114781
 }

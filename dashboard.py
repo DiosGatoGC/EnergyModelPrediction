@@ -1,5 +1,4 @@
 import json
-import json
 from pathlib import Path
 
 import numpy as np
@@ -19,23 +18,19 @@ OUTPUT_DIR = ROOT / "reports" / "model_outputs"
 MODELS_DIR = ROOT / "models"
 
 # Rutas Hito 2
-PREDICTIONS_BASELINE_PATH = OUTPUT_DIR / "predicciones_test.csv"
-METRICS_BASELINE_PATH = OUTPUT_DIR / "metricas_baseline.csv"
-DIST_METRICS_BASELINE_PATH = OUTPUT_DIR / "metricas_por_distribuidora.csv"
-TARIFF_METRICS_BASELINE_PATH = OUTPUT_DIR / "metricas_por_tarifa.csv"
+PREDICTIONS_BASELINE_PATH = OUTPUT_DIR / "predicciones_test.parquet"
+METRICS_BASELINE_PATH = OUTPUT_DIR / "metricas_baseline.parquet"
+DIST_METRICS_BASELINE_PATH = OUTPUT_DIR / "metricas_por_distribuidora.parquet"
+TARIFF_METRICS_BASELINE_PATH = OUTPUT_DIR / "metricas_por_tarifa.parquet"
 
 # Rutas Hito 3
-PREDICTIONS_H3_PATH = OUTPUT_DIR / "predicciones_test_comparativa.csv"
+PREDICTIONS_H3_PATH = OUTPUT_DIR / "predicciones_test_comparativa.parquet"
 HIST_H3_PATH = OUTPUT_DIR / "serie_historica_real_completa.parquet"
-METRICS_H3_PATH = OUTPUT_DIR / "metricas_hito3_comparativa.csv"
-METRICS_VAL_H3_PATH = OUTPUT_DIR / "metricas_hito3_validation.csv"
-DIST_METRICS_H3_PATH = OUTPUT_DIR / "metricas_hito3_por_distribuidora.csv"
-TARIFF_METRICS_H3_PATH = OUTPUT_DIR / "metricas_hito3_por_tarifa.csv"
+METRICS_H3_PATH = OUTPUT_DIR / "metricas_hito3_comparativa.parquet"
+METRICS_VAL_H3_PATH = OUTPUT_DIR / "metricas_hito3_validation.parquet"
+DIST_METRICS_H3_PATH = OUTPUT_DIR / "metricas_hito3_por_distribuidora.parquet"
+TARIFF_METRICS_H3_PATH = OUTPUT_DIR / "metricas_hito3_por_tarifa.parquet"
 MANIFEST_H3_PATH = OUTPUT_DIR / "hito3_run_manifest.json"
-
-@st.cache_data
-def load_csv(path: Path) -> pd.DataFrame:
-    return pd.read_csv(path)
 
 @st.cache_data
 def load_parquet(path: Path) -> pd.DataFrame:
@@ -48,10 +43,11 @@ def load_json(path: Path) -> dict:
 
 @st.cache_data
 def load_predictions(path: Path) -> pd.DataFrame:
-    return pd.read_csv(
-        path,
-        dtype={"DISTRIBUIDORA": "string", "UBIGEO": "string", "TARIFA": "string"}
-    )
+    df = pd.read_parquet(path)
+    for col in ("DISTRIBUIDORA", "UBIGEO", "TARIFA"):
+        if col in df.columns:
+            df[col] = df[col].astype("string")
+    return df
 
 
 @st.cache_data(ttl=60, show_spinner=False)
@@ -129,16 +125,239 @@ st.subheader("ENOSA & Hidrandina — Evaluación CRISP-DM")
 # Selector de Hito / Vista en Sidebar
 st.sidebar.title("Configuración")
 hito_selection = st.sidebar.radio(
-    "Selecciona la Fase de Modelado:",
+    "Selecciona el Modo / Fase:",
     [
+        "Producto: Reconstrucción y Pronóstico Futuro",
         "Hito 3: Modelos Avanzados (campeón por VALIDATION)",
         "Hito 2: Baseline Inicial (Decision Tree vs Referencia)",
     ],
     index=0
 )
 
-# Carga condicional según selección. Hito 3 prefiere PostgreSQL y conserva fallback local.
-if "Hito 3" in hito_selection:
+CUBE_PATH = ROOT / "reports" / "eda_outputs" / "resumen_distribuidora_ubigeo_tarifa_periodo.parquet"
+CHAMPION_MODEL_PATH = MODELS_DIR / "modelo_campeon_hito3.joblib"
+GEOJSON_PATH = ROOT / "metadata" / "geo" / "distritos_concesion.geojson"
+
+
+@st.cache_data
+def load_geojson_concesion() -> tuple[dict, pd.DataFrame]:
+    with GEOJSON_PATH.open(encoding="utf-8") as f:
+        geo = json.load(f)
+    meta_rows = []
+    for feat in geo.get("features", []):
+        p = feat.get("properties", {})
+        u = str(p.get("ubigeo", "")).strip().zfill(6)
+        p["ubigeo"] = u
+        meta_rows.append({
+            "UBIGEO": u,
+            "DISTRITO": p.get("nombre") or p.get("nombdist") or u,
+            "PROVINCIA": p.get("nombre_provincia") or "",
+            "DEPARTAMENTO": p.get("nombre_departamento") or "",
+        })
+    return geo, pd.DataFrame(meta_rows).drop_duplicates("UBIGEO")
+
+
+def add_months_ym(ym: int, delta: int) -> int:
+    y, m = divmod(int(ym), 100)
+    idx = y * 12 + (m - 1) + delta
+    ny, nm = divmod(idx, 12)
+    return ny * 100 + (nm + 1)
+
+
+@st.cache_resource
+def load_champion_model():
+    import joblib
+    return joblib.load(CHAMPION_MODEL_PATH)
+
+
+@st.cache_data(show_spinner="Detectando anomalías, reconstruyendo serie y calculando pronóstico futuro...")
+def build_product_series(
+    horizon_months: int,
+    gwh_ratio_threshold: float = 0.80,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    cube = pd.read_parquet(CUBE_PATH)
+    cube["PERIODO"] = cube["PERIODO"].astype(int)
+    model = load_champion_model()
+    feature_names = list(model.feature_name_)
+
+    # Detectar meses anómalos por caída brusca de demanda GWh vs mediana móvil centrada de 5 meses
+    monthly_tot = (
+        cube.groupby(["DISTRIBUIDORA", "PERIODO"], as_index=False)["consumo_total_mwh"]
+        .sum()
+        .sort_values(["DISTRIBUIDORA", "PERIODO"])
+    )
+    anomalous_periods: dict[str, set[int]] = {"ENOSA": set(), "HIDRANDINA": set()}
+    anomaly_summary_rows = []
+    for dist in monthly_tot["DISTRIBUIDORA"].unique():
+        sub = monthly_tot.loc[monthly_tot["DISTRIBUIDORA"] == dist].sort_values("PERIODO").copy()
+        sub["roll_med_gwh"] = sub["consumo_total_mwh"].rolling(5, center=True, min_periods=2).median()
+        sub["gwh_ratio"] = sub["consumo_total_mwh"] / sub["roll_med_gwh"]
+        bad = sub.loc[sub["gwh_ratio"] < gwh_ratio_threshold]
+        anomalous_periods[str(dist)] = set(bad["PERIODO"].astype(int).tolist())
+        for r in bad.itertuples(index=False):
+            anomaly_summary_rows.append({
+                "DISTRIBUIDORA": str(r.DISTRIBUIDORA),
+                "PERIODO": int(r.PERIODO),
+                "Real_Original_GWh": float(r.consumo_total_mwh) / 1e3,
+                "Mediana_Movil_GWh": float(r.roll_med_gwh) / 1e3,
+                "Ratio_GWh": float(r.gwh_ratio),
+            })
+
+    # Lookup limpio para construir lags sin contaminar con meses anómalos
+    lookup: dict[tuple[tuple[str, str, str], int], tuple[float, float, float]] = {}
+    series_by_dist: dict[str, set[tuple[str, str, str]]] = {"ENOSA": set(), "HIDRANDINA": set()}
+    last_known_meta: dict[tuple[str, str, str], tuple[float, float]] = {}
+
+    for row in cube.itertuples(index=False):
+        dist = str(row.DISTRIBUIDORA)
+        key = (dist, str(row.UBIGEO), str(row.TARIFA))
+        per = int(row.PERIODO)
+        series_by_dist.setdefault(dist, set()).add(key)
+        last_known_meta[key] = (float(row.n_registros), float(row.consumo_mediano))
+        if per not in anomalous_periods.get(dist, set()):
+            lookup[(key, per)] = (float(row.consumo_total_mwh), float(row.n_registros), float(row.consumo_mediano))
+
+    def predict_step(keys: list[tuple[str, str, str]], base_period: int, target_period: int, tipo: str) -> list[dict]:
+        rows, valid_keys, base_consumos = [], [], []
+        for key in keys:
+            base_val = lookup.get((key, base_period))
+            if base_val is None:
+                continue
+            c_t, n_reg, c_med = base_val
+            l1 = lookup.get((key, add_months_ym(base_period, -1)))
+            l2 = lookup.get((key, add_months_ym(base_period, -2)))
+            l3 = lookup.get((key, add_months_ym(base_period, -3)))
+            l12 = lookup.get((key, add_months_ym(base_period, -12)))
+            lag1 = l1[0] if l1 is not None else np.nan
+            lag2 = l2[0] if l2 is not None else np.nan
+            lag3 = l3[0] if l3 is not None else np.nan
+            lag12 = l12[0] if l12 is not None else np.nan
+            mes = base_period % 100
+            valid_vals = [v for v in (c_t, lag1, lag2) if not np.isnan(v)]
+            rows.append({
+                "DISTRIBUIDORA": key[0],
+                "UBIGEO": key[1],
+                "TARIFA": key[2],
+                "MES": mes,
+                "MES_SIN": float(np.sin(2 * np.pi * mes / 12.0)),
+                "MES_COS": float(np.cos(2 * np.pi * mes / 12.0)),
+                "n_registros": n_reg,
+                "consumo_mediano": c_med,
+                "consumo_total_mwh": c_t,
+                "lag_1": lag1,
+                "lag_2": lag2,
+                "lag_3": lag3,
+                "lag_12": lag12,
+                "RATIO_LAG1": (c_t + 1.0) / (lag1 + 1.0) if not np.isnan(lag1) else np.nan,
+                "RATIO_LAG2": (c_t + 1.0) / (lag2 + 1.0) if not np.isnan(lag2) else np.nan,
+                "RATIO_LAG3": (c_t + 1.0) / (lag3 + 1.0) if not np.isnan(lag3) else np.nan,
+                "ROLLING_MEAN_3": float(np.mean(valid_vals)),
+                "HAS_LAG1": int(not np.isnan(lag1)),
+                "HAS_LAG2": int(not np.isnan(lag2)),
+                "HAS_LAG3": int(not np.isnan(lag3)),
+                "HAS_LAG12": int(not np.isnan(lag12)),
+            })
+            valid_keys.append((key, n_reg, c_med))
+            base_consumos.append(c_t)
+
+        if not rows:
+            return []
+        X_step = pd.DataFrame(rows)
+        for col in ("DISTRIBUIDORA", "UBIGEO", "TARIFA"):
+            X_step[col] = X_step[col].astype("category")
+        pred_delta = model.predict(X_step[feature_names])
+        pred_mwh = np.clip(np.expm1(np.log1p(np.array(base_consumos)) + pred_delta), 0, None)
+
+        out = []
+        for (key, n_reg, c_med), val in zip(valid_keys, pred_mwh):
+            val_f = float(val)
+            lookup[(key, target_period)] = (val_f, n_reg, c_med)
+            out.append({
+                "DISTRIBUIDORA": key[0],
+                "UBIGEO": key[1],
+                "TARIFA": key[2],
+                "PERIODO": target_period,
+                "n_registros": int(n_reg),
+                "consumo_total_mwh": val_f,
+                "TIPO": tipo,
+            })
+        return out
+
+    generated: list[dict] = []
+
+    # 1. Reconstruir cronológicamente anomalías detectadas y huecos de Hidrandina hasta 2026-08
+    hid_keys_sorted = sorted(series_by_dist.get("HIDRANDINA", set()))
+    # Recorrer desde 202211 hasta 202608 en orden cronológico
+    curr = 202210
+    while curr < 202608:
+        nxt = add_months_ym(curr, 1)
+        is_missing_hid = nxt == 202211 or nxt >= 202508
+        is_anom_hid = nxt in anomalous_periods.get("HIDRANDINA", set())
+        if is_missing_hid or is_anom_hid:
+            tipo_lbl = "Reconstruido (Anomalía)" if is_anom_hid else "Reconstruido (Faltante)"
+            generated.extend(predict_step(hid_keys_sorted, curr, nxt, tipo_lbl))
+        curr = nxt
+
+    # Reconstruir anomalías si las hubiera en ENOSA
+    enosa_keys_sorted = sorted(series_by_dist.get("ENOSA", set()))
+    for anom_p in sorted(anomalous_periods.get("ENOSA", set())):
+        prev_p = add_months_ym(anom_p, -1)
+        generated.extend(predict_step(enosa_keys_sorted, prev_p, anom_p, "Reconstruido (Anomalía)"))
+
+    # 2. Pronóstico futuro (2026-09 en adelante) para ambas distribuidoras sobre la serie limpia
+    all_active_keys = enosa_keys_sorted + hid_keys_sorted
+    curr = 202608
+    for _ in range(horizon_months):
+        nxt = add_months_ym(curr, 1)
+        generated.extend(predict_step(all_active_keys, curr, nxt, "Pronóstico Futuro"))
+        curr = nxt
+
+    # Conservar original marcado (Real vs Anómalo Original) para comparación visual
+    base_df = cube[["DISTRIBUIDORA", "UBIGEO", "TARIFA", "PERIODO", "n_registros", "consumo_total_mwh"]].copy()
+    base_df["TIPO"] = np.where(
+        base_df.apply(lambda r: int(r["PERIODO"]) in anomalous_periods.get(str(r["DISTRIBUIDORA"]), set()), axis=1),
+        "Real (Anomalía Original)",
+        "Real",
+    )
+    gen_df = pd.DataFrame(generated)
+    combined = pd.concat([base_df, gen_df], ignore_index=True) if not gen_df.empty else base_df
+    anom_df = pd.DataFrame(anomaly_summary_rows)
+    return combined.sort_values(["DISTRIBUIDORA", "UBIGEO", "TARIFA", "PERIODO"]).reset_index(drop=True), anom_df
+
+
+@st.cache_data
+def load_ubigeo_labels() -> dict[str, str]:
+    labels: dict[str, str] = {}
+    if GEOJSON_PATH.is_file():
+        _, geo_meta = load_geojson_concesion()
+        for r in geo_meta.itertuples(index=False):
+            u = str(r.UBIGEO).strip().zfill(6)
+            dist_n = str(r.DISTRITO).strip().title()
+            dep_n = str(r.DEPARTAMENTO).strip().title()
+            labels[u] = f"{dist_n} ({dep_n}) — {u}" if dep_n else f"{dist_n} — {u}"
+    return labels
+
+
+is_product = hito_selection.startswith("Producto")
+
+# Carga condicional según selección.
+if is_product:
+    horizon_months = st.sidebar.slider("Horizonte futuro (meses tras 2026-08)", min_value=1, max_value=6, value=4)
+    gwh_drop_threshold = st.sidebar.slider(
+        "Umbral caída de GWh (ratio vs mediana 5m)",
+        min_value=0.50, max_value=0.95, value=0.80, step=0.05,
+    )
+    predictions, anomaly_df = build_product_series(horizon_months, gwh_drop_threshold)
+    history_df = None
+    metrics_test = pd.DataFrame()
+    metrics_val = None
+    dist_metrics = pd.DataFrame()
+    tariff_metrics = pd.DataFrame()
+    ubigeo_metrics = pd.DataFrame()
+    h3_manifest = {}
+    data_source_label = "Cubo + Modelo Hito 3"
+    is_hito3 = False
+elif "Hito 3" in hito_selection:
     try:
         (
             predictions, metrics_test, metrics_val, dist_metrics, tariff_metrics,
@@ -149,23 +368,23 @@ if "Hito 3" in hito_selection:
     except Exception:
         predictions = load_predictions(PREDICTIONS_H3_PATH)
         history_df = load_parquet(HIST_H3_PATH) if HIST_H3_PATH.is_file() else None
-        metrics_test = load_csv(METRICS_H3_PATH)
-        metrics_val = load_csv(METRICS_VAL_H3_PATH) if METRICS_VAL_H3_PATH.is_file() else None
-        dist_metrics = load_csv(DIST_METRICS_H3_PATH)
-        tariff_metrics = load_csv(TARIFF_METRICS_H3_PATH)
-        ubigeo_metrics = load_csv(OUTPUT_DIR / "hito3_errores_por_ubigeo.csv")
+        metrics_test = load_parquet(METRICS_H3_PATH)
+        metrics_val = load_parquet(METRICS_VAL_H3_PATH) if METRICS_VAL_H3_PATH.is_file() else None
+        dist_metrics = load_parquet(DIST_METRICS_H3_PATH)
+        tariff_metrics = load_parquet(TARIFF_METRICS_H3_PATH)
+        ubigeo_metrics = load_parquet(OUTPUT_DIR / "hito3_errores_por_ubigeo.parquet")
         h3_manifest = load_json(MANIFEST_H3_PATH) if MANIFEST_H3_PATH.is_file() else {}
-        h3_manifest["_segmentos_por_periodo"] = load_csv(OUTPUT_DIR / "hito3_errores_por_mes.csv").to_dict(orient="records")
-        h3_manifest["_segmentos_por_rango"] = load_csv(OUTPUT_DIR / "hito3_errores_por_rango_consumo.csv").to_dict(orient="records")
+        h3_manifest["_segmentos_por_periodo"] = load_parquet(OUTPUT_DIR / "hito3_errores_por_mes.parquet").to_dict(orient="records")
+        h3_manifest["_segmentos_por_rango"] = load_parquet(OUTPUT_DIR / "hito3_errores_por_rango_consumo.parquet").to_dict(orient="records")
         data_source_label = "archivos locales"
     is_hito3 = True
 else:
     predictions = load_predictions(PREDICTIONS_BASELINE_PATH)
     history_df = None
-    metrics_test = load_csv(METRICS_BASELINE_PATH)
+    metrics_test = load_parquet(METRICS_BASELINE_PATH)
     metrics_val = None
-    dist_metrics = load_csv(DIST_METRICS_BASELINE_PATH)
-    tariff_metrics = load_csv(TARIFF_METRICS_BASELINE_PATH)
+    dist_metrics = load_parquet(DIST_METRICS_BASELINE_PATH)
+    tariff_metrics = load_parquet(TARIFF_METRICS_BASELINE_PATH)
     ubigeo_metrics = pd.DataFrame()
     h3_manifest = {}
     data_source_label = "archivos locales"
@@ -184,10 +403,18 @@ filter_base = predictions
 if selected_dist != "Todas":
     filter_base = filter_base.loc[filter_base["DISTRIBUIDORA"] == selected_dist]
 
-ubigeo_options = ["Todos"] + sorted(filter_base["UBIGEO"].dropna().astype(str).unique().tolist())
-selected_ubigeo = st.sidebar.selectbox("UBIGEO (Distrito)", ubigeo_options)
+ubigeo_labels = load_ubigeo_labels()
+raw_ubigeos = filter_base["UBIGEO"].dropna().astype(str).str.strip().str.zfill(6).unique().tolist()
+if is_product and ubigeo_labels:
+    raw_ubigeos = [u for u in raw_ubigeos if u in ubigeo_labels]
+ubigeo_options = ["Todos"] + sorted(raw_ubigeos, key=lambda u: ubigeo_labels.get(u, u))
+selected_ubigeo = st.sidebar.selectbox(
+    "Distrito (UBIGEO)",
+    ubigeo_options,
+    format_func=lambda u: "Todos" if u == "Todos" else ubigeo_labels.get(u, u),
+)
 if selected_ubigeo != "Todos":
-    filter_base = filter_base.loc[filter_base["UBIGEO"].astype(str) == selected_ubigeo]
+    filter_base = filter_base.loc[filter_base["UBIGEO"].astype(str).str.strip().str.zfill(6) == selected_ubigeo]
 
 tariff_options = ["Todas"] + sorted(filter_base["TARIFA"].dropna().unique().tolist())
 selected_tariff = st.sidebar.selectbox("Tarifa Eléctrica", tariff_options)
@@ -201,9 +428,229 @@ if filtered.empty:
     st.warning("No existen registros para la combinación de filtros seleccionada.")
     st.stop()
 
-# ==================== VISTA HITO 3 ====================
-if is_hito3:
-    st.markdown("### Desempeño Oficial en Conjunto TEST (2025-04 a 2025-07)")
+# Vista Producto
+if is_product:
+    st.markdown("### Reconstrucción de Anomalías y Pronóstico Futuro")
+
+    real_mwh = filtered.loc[filtered["TIPO"].isin(["Real", "Real (Anomalía Original)"]), "consumo_total_mwh"].sum()
+    rec_anom_mwh = filtered.loc[filtered["TIPO"] == "Reconstruido (Anomalía)", "consumo_total_mwh"].sum()
+    rec_miss_mwh = filtered.loc[filtered["TIPO"] == "Reconstruido (Faltante)", "consumo_total_mwh"].sum()
+    fut_mwh = filtered.loc[filtered["TIPO"] == "Pronóstico Futuro", "consumo_total_mwh"].sum()
+
+    pk = st.columns(4)
+    pk[0].metric("Consumo Real Reportado", f"{real_mwh / 1e3:,.2f} GWh")
+    pk[1].metric("Anomalías Reconstruidas", f"{rec_anom_mwh / 1e3:,.2f} GWh")
+    pk[2].metric("Meses Faltantes Reconstruidos", f"{rec_miss_mwh / 1e3:,.2f} GWh")
+    pk[3].metric(f"Pronóstico Futuro (+{horizon_months}m)", f"{fut_mwh / 1e3:,.2f} GWh")
+
+    ts_prod = (
+        filtered.groupby(["DISTRIBUIDORA", "PERIODO", "TIPO"], as_index=False)["consumo_total_mwh"]
+        .sum()
+        .sort_values(["DISTRIBUIDORA", "PERIODO"])
+    )
+    ts_prod["Periodo"] = format_period(ts_prod["PERIODO"])
+    ts_prod["Energia_GWh"] = ts_prod["consumo_total_mwh"] / 1e3
+
+    fig_prod = go.Figure()
+    color_map = {"ENOSA": "#0284c7", "HIDRANDINA": "#16a34a"}
+
+    for dist in sorted(ts_prod["DISTRIBUIDORA"].unique()):
+        sub_d = ts_prod.loc[ts_prod["DISTRIBUIDORA"] == dist]
+        c_hex = color_map.get(dist, "#334155")
+
+        # 1. Serie Real Observada (línea sólida)
+        orig_d = sub_d.loc[sub_d["TIPO"].isin(["Real", "Real (Anomalía Original)"])].sort_values("PERIODO")
+        anom_pts = sub_d.loc[sub_d["TIPO"] == "Real (Anomalía Original)"].sort_values("PERIODO")
+        if not orig_d.empty:
+            fig_prod.add_trace(go.Scatter(
+                x=orig_d["Periodo"], y=orig_d["Energia_GWh"],
+                mode="lines+markers", name=f"{dist} — Real (Observado)",
+                line={"color": c_hex, "width": 2.6, "dash": "solid"},
+                marker={"size": 5},
+            ))
+        if not anom_pts.empty:
+            fig_prod.add_trace(go.Scatter(
+                x=anom_pts["Periodo"], y=anom_pts["Energia_GWh"],
+                mode="markers", name=f"{dist} — Anomalía detectada",
+                marker={"size": 9, "symbol": "x", "color": "#ef4444"},
+            ))
+
+        # 2. Serie Reconstruida por el Modelo (línea punteada SOLO en los huecos y anomalías)
+        clean_d = sub_d.loc[sub_d["TIPO"].isin(["Real", "Reconstruido (Anomalía)", "Reconstruido (Faltante)"])].sort_values("PERIODO").reset_index(drop=True)
+        rec_only = sub_d.loc[sub_d["TIPO"].isin(["Reconstruido (Anomalía)", "Reconstruido (Faltante)"])].sort_values("PERIODO")
+        if not rec_only.empty and not clean_d.empty:
+            is_rec = (clean_d["TIPO"] != "Real").to_numpy()
+            show_seg = is_rec.copy()
+            show_seg[:-1] |= is_rec[1:]
+            show_seg[1:] |= is_rec[:-1]
+            rec_y = [val if keep else None for val, keep in zip(clean_d["Energia_GWh"], show_seg)]
+            fig_prod.add_trace(go.Scatter(
+                x=clean_d["Periodo"], y=rec_y,
+                mode="lines", name=f"{dist} — Reconstrucción (Modelo)",
+                line={"color": "#f59e0b", "width": 2.4, "dash": "dot"},
+                connectgaps=False,
+            ))
+            fig_prod.add_trace(go.Scatter(
+                x=rec_only["Periodo"], y=rec_only["Energia_GWh"],
+                mode="markers", name=f"{dist} — Puntos Reconstruidos",
+                marker={"size": 8, "symbol": "diamond", "color": "#f59e0b"},
+            ))
+
+        # 3. Pronóstico Futuro (2026-09+)
+        fut_d = sub_d.loc[sub_d["TIPO"] == "Pronóstico Futuro"].sort_values("PERIODO")
+        if not fut_d.empty:
+            anchor = clean_d.loc[clean_d["PERIODO"] == 202608]
+            fut_plot = pd.concat([anchor, fut_d], ignore_index=True) if not anchor.empty else fut_d
+            fig_prod.add_trace(go.Scatter(
+                x=fut_plot["Periodo"], y=fut_plot["Energia_GWh"],
+                mode="lines+markers", name=f"{dist} — Pronóstico Futuro",
+                line={"color": c_hex, "width": 2.8, "dash": "dash"},
+                marker={"size": 6, "symbol": "star"},
+            ))
+
+    fig_prod.update_layout(
+        title="Serie Temporal",
+        xaxis_title="Periodo Mensual",
+        yaxis_title="Energía Mensual (GWh)",
+        hovermode="x unified",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        margin=dict(l=20, r=20, t=60, b=20),
+    )
+    st.plotly_chart(fig_prod, width="stretch")
+
+    if not anomaly_df.empty:
+        st.markdown("#### Anomalías Históricas Detectadas y Reconstrucción Contrafactual")
+        rec_anom_totals = (
+            ts_prod.loc[ts_prod["TIPO"] == "Reconstruido (Anomalía)", ["DISTRIBUIDORA", "PERIODO", "Energia_GWh"]]
+            .rename(columns={"Energia_GWh": "Reconstruido_GWh"})
+        )
+        anom_view = anomaly_df.merge(rec_anom_totals, on=["DISTRIBUIDORA", "PERIODO"], how="left")
+        anom_view["Diferencia_GWh"] = anom_view["Reconstruido_GWh"] - anom_view["Real_Original_GWh"]
+        st.dataframe(anom_view.round(3), width="stretch", hide_index=True)
+
+    # Mapa territorial (GeoJSON)
+    if GEOJSON_PATH.is_file():
+        st.markdown("### Mapa Territorial (GeoJSON)")
+        geo_data, geo_meta = load_geojson_concesion()
+        map_metric = st.radio(
+            "Métrica a visualizar en el mapa:",
+            ["Demanda Total Limpia (GWh)", "Pronóstico Futuro (GWh)", "Último Mes Real vs Reconstruido (GWh)"],
+            horizontal=True,
+        )
+
+        clean_mask = filtered["TIPO"].isin(["Real", "Reconstruido (Anomalía)", "Reconstruido (Faltante)"])
+        fut_mask = filtered["TIPO"] == "Pronóstico Futuro"
+        last_hist_mask = clean_mask & (filtered["PERIODO"] == 202608)
+
+        if map_metric == "Pronóstico Futuro (GWh)":
+            map_src = filtered.loc[fut_mask]
+        elif map_metric == "Último Mes Real vs Reconstruido (GWh)":
+            map_src = filtered.loc[last_hist_mask]
+        else:
+            map_src = filtered.loc[clean_mask]
+
+        agg_geo = (
+            map_src.groupby("UBIGEO", as_index=False)
+            .agg(
+                consumo_mwh=("consumo_total_mwh", "sum"),
+                DISTRIBUIDORA=("DISTRIBUIDORA", "first"),
+            )
+        )
+        agg_geo["UBIGEO"] = agg_geo["UBIGEO"].astype(str).str.strip().str.zfill(6)
+        agg_geo["Energia_GWh"] = agg_geo["consumo_mwh"] / 1e3
+
+        map_df = geo_meta.merge(agg_geo, on="UBIGEO", how="inner")
+        map_df["Energia_GWh"] = map_df["Energia_GWh"].fillna(0.0)
+        map_df["Color_Log"] = np.log1p(map_df["Energia_GWh"])
+
+        fig_map = go.Figure()
+        if not map_df.empty:
+            fig_map.add_trace(go.Choropleth(
+                geojson=geo_data,
+                locations=map_df["UBIGEO"],
+                z=map_df["Color_Log"],
+                featureidkey="properties.ubigeo",
+                colorscale="YlOrRd",
+                marker_line_color="#334155",
+                marker_line_width=0.6,
+                colorbar=dict(
+                    title="log1p(GWh)",
+                    thickness=14,
+                    len=0.75,
+                    x=0.92,
+                ),
+                customdata=np.stack([
+                    map_df["DISTRITO"],
+                    map_df["PROVINCIA"],
+                    map_df["DEPARTAMENTO"],
+                    map_df["DISTRIBUIDORA"],
+                    map_df["Energia_GWh"],
+                ], axis=-1),
+                hovertemplate=(
+                    "<b>%{customdata[0]}</b> (%{location})<br>"
+                    "Provincia: %{customdata[1]} | Dpto: %{customdata[2]}<br>"
+                    "Distribuidora: %{customdata[3]}<br>"
+                    "Energía: <b>%{customdata[4]:.3f} GWh</b><extra></extra>"
+                ),
+            ))
+        if selected_ubigeo != "Todos" and not map_df.empty:
+            fig_map.update_geos(
+                visible=True,
+                resolution=50,
+                scope="south america",
+                showcountries=True,
+                countrycolor="#64748b",
+                countrywidth=1.2,
+                showcoastlines=True,
+                coastlinecolor="#64748b",
+                coastlinewidth=1.0,
+                showland=True,
+                landcolor="#0f172a",
+                showocean=True,
+                oceancolor="#020617",
+                showlakes=False,
+                fitbounds="locations",
+                bgcolor="rgba(0,0,0,0)",
+            )
+        else:
+            fig_map.update_geos(
+                visible=True,
+                resolution=50,
+                scope="south america",
+                showcountries=True,
+                countrycolor="#64748b",
+                countrywidth=1.2,
+                showcoastlines=True,
+                coastlinecolor="#64748b",
+                coastlinewidth=1.0,
+                showland=True,
+                landcolor="#0f172a",
+                showocean=True,
+                oceancolor="#020617",
+                showlakes=False,
+                lataxis_range=[-11.8, -2.5],
+                lonaxis_range=[-83.5, -71.5],
+                bgcolor="rgba(0,0,0,0)",
+            )
+        fig_map.update_layout(
+            height=820,
+            margin=dict(l=0, r=0, t=40, b=0),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            title=f"{map_metric} — Distritos Seleccionados ({len(map_df)} de {len(geo_meta)})",
+        )
+        st.plotly_chart(fig_map, width="stretch")
+
+    st.markdown("#### Resumen Mensual (Real vs Reconstruido vs Pronóstico Futuro)")
+    pivot_prod = (
+        ts_prod.pivot_table(index="Periodo", columns=["DISTRIBUIDORA", "TIPO"], values="Energia_GWh", aggfunc="sum")
+        .sort_index()
+    )
+    st.dataframe(pivot_prod.round(3), width="stretch")
+
+# Vista Hito 3
+elif is_hito3:
+    st.markdown("### Evaluación en TEST (2025-04 a 2025-07)")
     champion_name = h3_manifest.get("champion", {}).get("name", "LightGBM Avanzado (Hito 3)")
     champion_family = h3_manifest.get("champion", {}).get("family", "LightGBM")
     champion_pred_col = {
@@ -222,18 +669,36 @@ if is_hito3:
     
     kpis = st.columns(5)
     kpis[0].metric("MAE Persistencia (Ref.)", f"{ref_row['MAE_MWh']:.3f} MWh")
-    kpis[1].metric(f"MAE {champion_family} (Campeón)", f"{champ_row['MAE_MWh']:.3f} MWh", delta=f"-{champ_row['MEJORA_MAE_pct']:.2f}% (Mejora)")
-    kpis[2].metric("MAE LightGBM", f"{lgb_row['MAE_MWh']:.3f} MWh", delta=f"-{lgb_row['MEJORA_MAE_pct']:.2f}%")
-    kpis[3].metric("MAE CatBoost", f"{cb_row['MAE_MWh']:.3f} MWh", delta=f"-{cb_row['MEJORA_MAE_pct']:.2f}%")
-    kpis[4].metric(f"WAPE {champion_family}", f"{champ_row['WAPE_pct']:.2f}%", delta=f"-{champ_row['MEJORA_MAE_pct']:.2f}% MAE vs Ref")
-    st.caption(f"Campeón oficial: {champion_name}, seleccionado exclusivamente por MAE en VALIDATION. Esta vista contiene solo TEST; FUTURE_HOLDOUT no se mezcla ni participa en la selección.")
+    kpis[1].metric(
+        f"MAE {champion_family} (Campeón)",
+        f"{champ_row['MAE_MWh']:.3f} MWh",
+        delta=f"{-champ_row['MEJORA_MAE_pct']:+.2f}% vs Ref",
+        delta_color="inverse",
+    )
+    kpis[2].metric(
+        "MAE LightGBM",
+        f"{lgb_row['MAE_MWh']:.3f} MWh",
+        delta=f"{-lgb_row['MEJORA_MAE_pct']:+.2f}% vs Ref",
+        delta_color="inverse",
+    )
+    kpis[3].metric(
+        "MAE CatBoost",
+        f"{cb_row['MAE_MWh']:.3f} MWh",
+        delta=f"{-cb_row['MEJORA_MAE_pct']:+.2f}% vs Ref",
+        delta_color="inverse",
+    )
+    kpis[4].metric(
+        f"WAPE {champion_family}",
+        f"{champ_row['WAPE_pct']:.2f}%",
+        delta=f"{-champ_row['MEJORA_MAE_pct']:+.2f}% MAE vs Ref",
+        delta_color="inverse",
+    )
+    st.caption(f"Campeón: {champion_name} (seleccionado en VALIDATION).")
     
-    # Tabla comparativa completa
-    st.markdown("#### Matriz Comparativa Oficial (TEST)")
-    tab1, tab2, tab3 = st.tabs([
-        "Evaluación TEST (Fuera de muestra)",
-        "Selección Intermedia en VALIDATION",
-        "Alcance metodológico"
+    st.markdown("#### Comparativa de Modelos")
+    tab1, tab2 = st.tabs([
+        "TEST",
+        "VALIDATION",
     ])
     
     with tab1:
@@ -248,7 +713,6 @@ if is_hito3:
             width="stretch",
             hide_index=True
         )
-        st.success(f" {champion_name} fue fijado antes de TEST por su MAE de VALIDATION. TEST se usa únicamente como evaluación final fuera de muestra.")
         
     with tab2:
         if metrics_val is not None:
@@ -263,10 +727,6 @@ if is_hito3:
                 width="stretch",
                 hide_index=True
             )
-            st.info("El conjunto VALIDATION (2025-01 a 2025-03) se utilizó formalmente como árbitro imparcial para seleccionar el modelo campeón antes del reentrenamiento final.")
-
-    with tab3:
-        st.info("La corrida oficial Hito 3 compara persistencia, Decision Tree y tres modelos avanzados con ajuste temporal dentro de TRAIN. No se usan comparativas históricas de arquitecturas para seleccionar el campeón ni para reportar métricas oficiales.")
 
     # Gráfico de Consumo Temporal: Empalme Histórico + Pronóstico Test
     st.markdown("###  Trayectoria Temporal: Demanda Histórica y Pronósticos (TEST Ciego)")
@@ -435,7 +895,7 @@ if is_hito3:
             nbins=50,
             color_discrete_sequence=["#3b82f6"],
             labels={"x": "Error Residual (MWh)"},
-            title="Distribución centrada en 0 (sin sesgo sistemático)"
+            title="Distribución de residuos (recortada a ±100 MWh)"
         )
         fig_res.add_vline(x=0, line_dash="dash", line_color="#dc2626")
         st.plotly_chart(fig_res, width="stretch")
@@ -485,18 +945,26 @@ if is_hito3:
     else:
         c4.metric("Modelo alternativo", "No almacenado")
 
-# ==================== VISTA HITO 2 ====================
+# Vista Hito 2
 else:
-    st.markdown("### Baseline Inicial — Decision Tree (Hito 2)")
+    st.markdown("### Baseline — Decision Tree (Hito 2)")
     test_metrics = metrics_test.loc[metrics_test["CONJUNTO"].astype(str).str.upper() == "TEST"]
     ref_row = test_metrics.loc[test_metrics["MODELO"] == "Referencia temporal"].iloc[0]
     tree_row = test_metrics.loc[test_metrics["MODELO"] == "Decision Tree"].iloc[0]
     
     kpis = st.columns(4)
     kpis[0].metric("MAE Referencia temporal", f"{ref_row['MAE']:.3f} MWh")
-    kpis[1].metric("MAE Decision Tree", f"{tree_row['MAE']:.3f} MWh", delta=f"{tree_row['MEJORA_MAE_PCT']:.1f}%")
+    kpis[1].metric(
+        "MAE Decision Tree",
+        f"{tree_row['MAE']:.3f} MWh",
+        delta=f"{-tree_row['MEJORA_MAE_PCT']:+.1f}% vs Ref",
+        delta_color="inverse",
+    )
     kpis[2].metric("RMSE Decision Tree", f"{tree_row['RMSE']:.3f} MWh")
     kpis[3].metric("R² Decision Tree", f"{tree_row['R2']:.4f}")
     
-    st.warning("En el Hito 2, el DecisionTreeRegressor no superó la referencia temporal (-24.74% en MAE), debido a la alta cardinalidad de UBIGEO y la aproximación escalonada sobre niveles absolutos.")
+    st.warning(
+        f"En el Hito 2, el DecisionTreeRegressor no superó la referencia temporal "
+        f"({tree_row['MEJORA_MAE_PCT']:+.2f}% en MAE), debido a la alta cardinalidad de UBIGEO y la aproximación escalonada sobre niveles absolutos."
+    )
     st.dataframe(test_metrics, width="stretch", hide_index=True)

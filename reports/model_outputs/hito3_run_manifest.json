@@ -1,7 +1,7 @@
 {
   "run_name": "hito3_oficial_validation_selection_v1",
-  "executed_at": "2026-11-12T23:31:04.933064-05:00",
-  "dataset": "data\\processed\\dataset_ml.parquet",
+  "executed_at": "2026-11-25T13:46:19.384376-05:00",
+  "dataset": "data/processed/dataset_ml.parquet",
   "target": "TARGET_CONSUMO_MWH",
   "internal_training_target": "LOG_DELTA",
   "features": [
@@ -9,14 +9,23 @@
     "UBIGEO",
     "TARIFA",
     "MES",
+    "MES_SIN",
+    "MES_COS",
+    "n_registros",
+    "consumo_mediano",
     "consumo_total_mwh",
     "lag_1",
     "lag_2",
     "lag_3",
+    "lag_12",
     "RATIO_LAG1",
     "RATIO_LAG2",
     "RATIO_LAG3",
-    "ROLLING_MEAN_3"
+    "ROLLING_MEAN_3",
+    "HAS_LAG1",
+    "HAS_LAG2",
+    "HAS_LAG3",
+    "HAS_LAG12"
   ],
   "random_state": 42,
   "splits": {
@@ -37,106 +46,106 @@
     "name": "LightGBM Avanzado (Hito 3)",
     "family": "LightGBM",
     "hyperparameters": {
-      "modelo__subsample": 0.8,
-      "modelo__num_leaves": 31,
-      "modelo__n_estimators": 120,
-      "modelo__min_child_samples": 50,
-      "modelo__learning_rate": 0.03,
-      "modelo__colsample_bytree": 0.8
+      "subsample": 0.8,
+      "num_leaves": 31,
+      "n_estimators": 120,
+      "min_child_samples": 20,
+      "learning_rate": 0.05,
+      "colsample_bytree": 0.8
     },
-    "model_path": "models\\modelo_campeon_hito3.joblib"
+    "model_path": "models/modelo_campeon_hito3.joblib"
   },
   "validation_metrics": [
     {
       "MODELO": "LightGBM Avanzado (Hito 3)",
-      "MAE_MWh": 11.35529534716855,
-      "RMSE_MWh": 70.96858583739385,
-      "R2": 0.9947295574925947,
-      "WAPE_pct": 6.030123166312549,
-      "MEJORA_MAE_pct": 22.473145735554574,
-      "HIPERPARAMETROS_SELECCIONADOS": "{\"modelo__colsample_bytree\": 0.8, \"modelo__learning_rate\": 0.03, \"modelo__min_child_samples\": 50, \"modelo__n_estimators\": 120, \"modelo__num_leaves\": 31, \"modelo__subsample\": 0.8}"
-    },
-    {
-      "MODELO": "XGBoost Avanzado (Hito 3)",
-      "MAE_MWh": 12.037300126270955,
-      "RMSE_MWh": 71.35305455227744,
-      "R2": 0.9946722981016308,
-      "WAPE_pct": 6.39229541214733,
-      "MEJORA_MAE_pct": 17.81684367553713,
-      "HIPERPARAMETROS_SELECCIONADOS": "{\"modelo__colsample_bytree\": 0.8, \"modelo__learning_rate\": 0.03, \"modelo__max_depth\": 7, \"modelo__min_child_weight\": 1, \"modelo__n_estimators\": 80, \"modelo__subsample\": 0.8}"
+      "MAE_MWh": 9.670650147293605,
+      "RMSE_MWh": 57.05586545503822,
+      "R2": 0.9956911109668071,
+      "WAPE_pct": 5.949273454917671,
+      "MEJORA_MAE_pct": 25.57586074216347,
+      "HIPERPARAMETROS_SELECCIONADOS": "{\"colsample_bytree\": 0.8, \"learning_rate\": 0.05, \"min_child_samples\": 20, \"n_estimators\": 120, \"num_leaves\": 31, \"subsample\": 0.8}"
     },
     {
       "MODELO": "CatBoost Avanzado (Hito 3)",
-      "MAE_MWh": 12.813040976365107,
-      "RMSE_MWh": 81.02232882257505,
-      "R2": 0.9931305143370092,
-      "WAPE_pct": 6.804245319938514,
-      "MEJORA_MAE_pct": 12.520570351636092,
-      "HIPERPARAMETROS_SELECCIONADOS": "{\"modelo__depth\": 7, \"modelo__iterations\": 120, \"modelo__l2_leaf_reg\": 5, \"modelo__learning_rate\": 0.05}"
+      "MAE_MWh": 9.891362659126663,
+      "RMSE_MWh": 59.76760838937818,
+      "R2": 0.9952717931185372,
+      "WAPE_pct": 6.085053269906024,
+      "MEJORA_MAE_pct": 23.877284279731168,
+      "HIPERPARAMETROS_SELECCIONADOS": "{\"depth\": 6, \"iterations\": 120, \"l2_leaf_reg\": 3, \"learning_rate\": 0.05}"
+    },
+    {
+      "MODELO": "XGBoost Avanzado (Hito 3)",
+      "MAE_MWh": 10.201610220764127,
+      "RMSE_MWh": 59.13642247093764,
+      "R2": 0.9953711318463632,
+      "WAPE_pct": 6.2759140243320575,
+      "MEJORA_MAE_pct": 21.48965703853966,
+      "HIPERPARAMETROS_SELECCIONADOS": "{\"colsample_bytree\": 0.8, \"learning_rate\": 0.03, \"max_depth\": 7, \"min_child_weight\": 1, \"n_estimators\": 120, \"subsample\": 0.8}"
     },
     {
       "MODELO": "Referencia Temporal (Persistencia)",
-      "MAE_MWh": 14.646918741776163,
-      "RMSE_MWh": 87.54424483733393,
-      "R2": 0.9919800810511402,
-      "WAPE_pct": 7.778108919192948,
+      "MAE_MWh": 12.993969757299315,
+      "RMSE_MWh": 77.64710934763295,
+      "R2": 0.9920197719936249,
+      "WAPE_pct": 7.993741700265937,
       "MEJORA_MAE_pct": 0.0,
       "HIPERPARAMETROS_SELECCIONADOS": "No aplica"
     },
     {
       "MODELO": "Decision Tree Baseline (Hito 2)",
-      "MAE_MWh": 17.423408156260248,
-      "RMSE_MWh": 102.2831716497095,
-      "R2": 0.9890522933841385,
-      "WAPE_pct": 9.25253760003539,
-      "MEJORA_MAE_pct": -18.956133118735334,
+      "MAE_MWh": 15.00030866995049,
+      "RMSE_MWh": 100.56021291524603,
+      "R2": 0.9866150398198743,
+      "WAPE_pct": 9.228018470990031,
+      "MEJORA_MAE_pct": -15.440538573857477,
       "HIPERPARAMETROS_SELECCIONADOS": "{\"max_depth\": 8, \"min_samples_leaf\": 10, \"criterion\": \"squared_error\"}"
     }
   ],
   "test_metrics": [
     {
+      "MODELO": "CatBoost Avanzado (Hito 3)",
+      "MAE_MWh": 7.753291815434411,
+      "RMSE_MWh": 42.162156274120285,
+      "R2": 0.9975973388046817,
+      "WAPE_pct": 4.805876983201616,
+      "MEJORA_MAE_pct": 17.966084519060534,
+      "SELECCIONADO_EN_VALIDATION": false
+    },
+    {
       "MODELO": "LightGBM Avanzado (Hito 3)",
-      "MAE_MWh": 8.670241367956885,
-      "RMSE_MWh": 48.84515657047053,
-      "R2": 0.9973272164223788,
-      "WAPE_pct": 4.7516914615038655,
-      "MEJORA_MAE_pct": 14.948672441816635,
+      "MAE_MWh": 7.960840458863454,
+      "RMSE_MWh": 42.7719057023863,
+      "R2": 0.9975273416795276,
+      "WAPE_pct": 4.934525984438063,
+      "MEJORA_MAE_pct": 15.770110437529352,
       "SELECCIONADO_EN_VALIDATION": true
     },
     {
       "MODELO": "XGBoost Avanzado (Hito 3)",
-      "MAE_MWh": 8.690998591386654,
-      "RMSE_MWh": 48.99840276461594,
-      "R2": 0.9973104189969101,
-      "WAPE_pct": 4.763067375639345,
-      "MEJORA_MAE_pct": 14.745053034443703,
-      "SELECCIONADO_EN_VALIDATION": false
-    },
-    {
-      "MODELO": "CatBoost Avanzado (Hito 3)",
-      "MAE_MWh": 9.145190338118718,
-      "RMSE_MWh": 53.84183278054937,
-      "R2": 0.9967524155602994,
-      "WAPE_pct": 5.011985364567355,
-      "MEJORA_MAE_pct": 10.289627933096703,
+      "MAE_MWh": 8.059909640622983,
+      "RMSE_MWh": 43.23036201883486,
+      "R2": 0.9974740505689936,
+      "WAPE_pct": 4.995934004630847,
+      "MEJORA_MAE_pct": 14.721906258363976,
       "SELECCIONADO_EN_VALIDATION": false
     },
     {
       "MODELO": "Referencia Temporal (Persistencia)",
-      "MAE_MWh": 10.194128201027313,
-      "RMSE_MWh": 58.97065524427716,
-      "R2": 0.9961042355615488,
-      "WAPE_pct": 5.586851608228274,
+      "MAE_MWh": 9.451324820934438,
+      "RMSE_MWh": 54.05945206918384,
+      "R2": 0.9960500628439473,
+      "WAPE_pct": 5.858402533910818,
       "MEJORA_MAE_pct": 0.0,
       "SELECCIONADO_EN_VALIDATION": false
     },
     {
       "MODELO": "Decision Tree Baseline (Hito 2)",
-      "MAE_MWh": 12.715929929120904,
-      "RMSE_MWh": 66.12886108343803,
-      "R2": 0.9951010515650659,
-      "WAPE_pct": 6.9689150630328465,
-      "MEJORA_MAE_pct": -24.73778707079097,
+      "MAE_MWh": 10.99129452689926,
+      "RMSE_MWh": 55.773614412017125,
+      "R2": 0.9957955955530715,
+      "WAPE_pct": 6.812952567741762,
+      "MEJORA_MAE_pct": -16.293691468034503,
       "SELECCIONADO_EN_VALIDATION": false
     }
   ],
