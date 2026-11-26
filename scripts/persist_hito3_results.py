@@ -19,18 +19,18 @@ from db_utils import connect_db, project_root
 ROOT = project_root()
 OUTPUT_DIR = ROOT / "reports" / "model_outputs"
 MANIFEST_PATH = OUTPUT_DIR / "hito3_run_manifest.json"
-PREDICTIONS_PATH = OUTPUT_DIR / "predicciones_test_comparativa.csv"
-TEST_METRICS_PATH = OUTPUT_DIR / "metricas_hito3_comparativa.csv"
-VALIDATION_METRICS_PATH = OUTPUT_DIR / "metricas_hito3_validation.csv"
+PREDICTIONS_PATH = OUTPUT_DIR / "predicciones_test_comparativa.parquet"
+TEST_METRICS_PATH = OUTPUT_DIR / "metricas_hito3_comparativa.parquet"
+VALIDATION_METRICS_PATH = OUTPUT_DIR / "metricas_hito3_validation.parquet"
 
 SEGMENT_SOURCES = (
-    ("DISTRIBUIDORA", "hito3_errores_por_distribuidora.csv", ("DISTRIBUIDORA",)),
-    ("TARIFA", "hito3_errores_por_tarifa.csv", ("TARIFA",)),
-    ("DISTRIBUIDORA_UBIGEO", "hito3_errores_por_ubigeo.csv", ("DISTRIBUIDORA", "UBIGEO")),
-    ("TARGET_PERIODO", "hito3_errores_por_mes.csv", ("TARGET_PERIODO",)),
+    ("DISTRIBUIDORA", "hito3_errores_por_distribuidora.parquet", ("DISTRIBUIDORA",)),
+    ("TARIFA", "hito3_errores_por_tarifa.parquet", ("TARIFA",)),
+    ("DISTRIBUIDORA_UBIGEO", "hito3_errores_por_ubigeo.parquet", ("DISTRIBUIDORA", "UBIGEO")),
+    ("TARGET_PERIODO", "hito3_errores_por_mes.parquet", ("TARGET_PERIODO",)),
     (
         "RANGO_CONSUMO",
-        "hito3_errores_por_rango_consumo.csv",
+        "hito3_errores_por_rango_consumo.parquet",
         ("RANGO_CONSUMO_REAL", "LIMITE_INFERIOR_MWh", "LIMITE_SUPERIOR_MWh"),
     ),
 )
@@ -60,12 +60,11 @@ def load_official_artifacts() -> tuple[dict[str, Any], pd.DataFrame, pd.DataFram
             raise FileNotFoundError(f"No se encontró el artefacto oficial requerido: {path}")
 
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
-    predictions = pd.read_csv(
-        PREDICTIONS_PATH,
-        dtype={"DISTRIBUIDORA": "string", "UBIGEO": "string", "TARIFA": "string"},
-    )
-    test_metrics = pd.read_csv(TEST_METRICS_PATH)
-    validation_metrics = pd.read_csv(VALIDATION_METRICS_PATH)
+    predictions = pd.read_parquet(PREDICTIONS_PATH)
+    for col in ("DISTRIBUIDORA", "UBIGEO", "TARIFA"):
+        predictions[col] = predictions[col].astype("string")
+    test_metrics = pd.read_parquet(TEST_METRICS_PATH)
+    validation_metrics = pd.read_parquet(VALIDATION_METRICS_PATH)
 
     expected_prediction_columns = {
         "DISTRIBUIDORA", "UBIGEO", "TARIFA", "PERIODO", "TARGET_PERIODO",
@@ -120,7 +119,10 @@ def segment_records(run_id: str) -> list[tuple[Any, ...]]:
         path = OUTPUT_DIR / filename
         if not path.is_file():
             raise FileNotFoundError(f"Falta el output oficial de segmento: {path}")
-        frame = pd.read_csv(path, dtype={"UBIGEO": "string", "DISTRIBUIDORA": "string", "TARIFA": "string"})
+        frame = pd.read_parquet(path)
+        for col in ("UBIGEO", "DISTRIBUIDORA", "TARIFA"):
+            if col in frame.columns:
+                frame[col] = frame[col].astype("string")
         required = {"OBSERVACIONES", "MAE_MWh", "RMSE_MWh", "R2", "WAPE_pct", "RESIDUO_MEDIO", *value_columns}
         missing = required.difference(frame.columns)
         if missing:
